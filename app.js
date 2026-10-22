@@ -118,6 +118,7 @@ function setState(raw) {
 
 function setBusy(busy) {
   operationRunning = busy;
+  document.querySelector('.bottom-bar').classList.toggle('busy', busy);
   $('play-button').disabled = busy;
   $('login-button').disabled = busy;
   $('update-button').disabled = busy;

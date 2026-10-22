@@ -40,10 +40,6 @@
       </div>
       <button class="settings-button" id="settings-button" type="button" title="Configuración" aria-label="Configuración">⚙</button>
     </nav>
-    <div class="download-status" id="download-status" aria-live="polite">
-      <span id="download-text"></span>
-      <progress id="download-progress" max="100" value="0"></progress>
-    </div>
   </main>
 
   <main id="settings" class="screen" aria-label="Configuración">
@@ -132,6 +128,10 @@
       </section>
     </div>
   </main>
+  <div class="download-status" id="download-status" aria-live="polite">
+    <span id="download-text"></span>
+    <progress id="download-progress" max="100" value="0"></progress>
+  </div>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 </body>
 </html>
