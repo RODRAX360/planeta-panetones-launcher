@@ -28,7 +28,7 @@
 
     <nav class="bottom-bar" aria-label="Controles principales">
       <button class="account-button" id="account-button" type="button" title="Cuenta de Minecraft">
-        <span class="avatar">P</span><span id="account-label">Cuenta</span>
+        <span class="avatar" id="account-avatar">P</span><span id="account-label">Cuenta</span>
       </button>
       <div class="play-group">
         <button class="play-button" id="play-button" type="button">▶&nbsp; JUGAR</button>
@@ -60,6 +60,21 @@
           <p id="account-detail">Inicia sesión con Microsoft para jugar. El launcher comprobará tu licencia de Minecraft.</p>
           <button type="button" class="action-button" id="login-button">Iniciar sesión con Microsoft</button>
         </div>
+        <div class="panel-card">
+          <h3>Perfiles</h3>
+          <p>Elige una cuenta Microsoft o un perfil local. Los perfiles locales no tienen licencia verificada y solo pueden entrar a mundos y servidores que los acepten.</p>
+          <div class="profile-list" id="profile-list"></div>
+          <div class="button-row profile-create">
+            <input id="local-name" type="text" maxlength="16" placeholder="Nombre del perfil local" aria-label="Nombre del perfil local" autocomplete="off">
+            <button type="button" class="action-button" id="create-local">Crear perfil local</button>
+          </div>
+        </div>
+        <div class="panel-card" id="skin-card" hidden>
+          <h3>Skin del perfil local</h3>
+          <div class="skin-preview"><span class="avatar large" id="skin-avatar">P</span><p id="skin-detail">Elige una skin PNG de Minecraft de 64×64 o 64×32 píxeles.</p></div>
+          <button type="button" class="action-button secondary" id="choose-skin">Elegir PNG de skin</button>
+          <p class="muted">La skin se guarda en tu PC. Se mostrará dentro del juego si el pack incluye Custom Skin Loader; otros jugadores necesitan una forma compatible de cargarla para verla.</p>
+        </div>
       </section>
       <section class="tab-panel" id="java-panel">
         <h2>Java y memoria</h2>
@@ -74,7 +89,7 @@
         <div class="panel-card details">
           <div><span>Versión</span><strong id="minecraft-version">1.20.1</strong></div>
           <div><span>Cargador</span><strong id="forge-version">Forge</strong></div>
-          <div><span>Mods del pack</span><strong id="mod-count">133</strong></div>
+          <div><span>Mods del pack</span><strong id="mod-count">—</strong></div>
           <div><span>Instancia</span><strong>Planeta Panetones</strong></div>
         </div>
         <div class="button-row">
@@ -88,6 +103,10 @@
           <h3>Fondo animado</h3>
           <p>Video «minecraft-earth.3840x2160.mp4» en bucle.</p>
           <label class="switch-row"><span>Reproducir video</span><input id="video-toggle" type="checkbox" checked></label>
+        </div>
+        <div class="panel-card">
+          <h3>Discord</h3>
+          <p id="discord-detail">Comprobando Rich Presence…</p>
         </div>
         <div class="panel-card">
           <h3>Actualizaciones del pack</h3>
