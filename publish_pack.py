@@ -12,6 +12,7 @@ from pathlib import Path
 SOURCE = Path.home() / ".var/app/com.modrinth.ModrinthApp/data/ModrinthApp/profiles/Forge 1.20.1"
 ROOT = Path(__file__).resolve().parent
 DEFAULT_DEST = ROOT / "publicar"
+EXTRA_MODS = ROOT / "bundled_mods"
 FOLDERS = ("mods", "config", "defaultconfigs", "resourcepacks", "shaderpacks", "emotes", "customnpcs")
 
 
@@ -65,6 +66,12 @@ def publish(destination: Path, version: str) -> dict:
         total += size
         if index % 25 == 0 or index == len(selected):
             print(f"Preparados {index}/{len(selected)} archivos", flush=True)
+    for source in sorted(EXTRA_MODS.glob("*.jar")):
+        relative = Path("mods") / source.name
+        sha256, size = copy_and_hash(source, destination / "files" / relative)
+        files.append({"path": relative.as_posix(), "sha256": sha256, "size": size})
+        total += size
+    files.sort(key=lambda entry: entry["path"])
     active = {entry["path"] for entry in files}
     files_dir = destination / "files"
     for stale in files_dir.rglob("*"):
