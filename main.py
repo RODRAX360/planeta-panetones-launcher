@@ -8,13 +8,15 @@ import sys
 import threading
 from pathlib import Path
 
-from PySide6.QtCore import QObject, QUrl, Signal, Slot
+from PySide6.QtCore import QObject, QRect, QTimer, QUrl, Signal, Slot, Qt
+from PySide6.QtGui import QPixmap, QPainter, QColor, QFont
 from PySide6.QtWebChannel import QWebChannel
 from PySide6.QtWebEngineCore import QWebEngineSettings
 from PySide6.QtWebEngineWidgets import QWebEngineView
-from PySide6.QtWidgets import QApplication, QMainWindow
+from PySide6.QtWidgets import QApplication, QFileDialog, QMainWindow, QSplashScreen
 
 import standalone
+from discord_presence import DiscordPresence
 
 APP_DIR = Path(__file__).resolve().parent
 
@@ -54,7 +56,8 @@ class Bridge(QObject):
                 standalone.install_game(status, progress)
                 status(f"Pack {manifest['version']} listo para jugar.")
             elif action == "play":
-                account = standalone.refreshed_account(status)
+                profile = standalone.selected_profile()
+                account = profile if profile["type"] == "local" else standalone.refreshed_account(status)
                 standalone.update_pack(status, progress)
                 game, java = standalone.install_game(status, progress)
                 status("Iniciando Minecraft…")
@@ -67,7 +70,10 @@ class Bridge(QObject):
             self._emit("error", text=str(exc))
         finally:
             self._lock.release()
-            self._emit("state", state=standalone.game_state())
+            try:
+                self._emit("state", state=standalone.game_state())
+            except Exception as exc:
+                self._emit("error", text=str(exc))
 
     @Slot(result=str)
     def login(self) -> str:
@@ -80,6 +86,32 @@ class Bridge(QObject):
     @Slot(result=str)
     def play(self) -> str:
         return self._start("play")
+
+    @Slot(str, result=str)
+    def createLocalProfile(self, name: str) -> str:
+        try:
+            standalone.create_local_profile(name)
+            return self.getState()
+        except Exception as exc:
+            return json.dumps({"ok": False, "error": str(exc)}, ensure_ascii=False)
+
+    @Slot(str, result=str)
+    def selectProfile(self, identifier: str) -> str:
+        try:
+            standalone.select_profile(identifier)
+            return self.getState()
+        except Exception as exc:
+            return json.dumps({"ok": False, "error": str(exc)}, ensure_ascii=False)
+
+    @Slot(result=str)
+    def chooseLocalSkin(self) -> str:
+        try:
+            source, _ = QFileDialog.getOpenFileName(self.parent(), "Elegir skin de Minecraft", str(Path.home()), "Imagen PNG (*.png)")
+            if source:
+                standalone.set_local_skin(Path(source))
+            return self.getState()
+        except Exception as exc:
+            return json.dumps({"ok": False, "error": str(exc)}, ensure_ascii=False)
 
     @Slot(result=str)
     def openFolder(self) -> str:
@@ -99,6 +131,40 @@ def main() -> int:
     os.environ.setdefault("QTWEBENGINE_CHROMIUM_FLAGS", "--autoplay-policy=no-user-gesture-required")
     app = QApplication(sys.argv)
     app.setApplicationName("Planeta Panetones")
+    presence = DiscordPresence(standalone.read_config().get("discord_application_id", ""))
+    presence.start()
+    app.aboutToQuit.connect(presence.stop)
+    icon = QPixmap(str(APP_DIR / "assets/icono.png"))
+
+    def splash_frame(percent: int) -> QPixmap:
+        pixmap = QPixmap(420, 205)
+        pixmap.fill(QColor("#0b1524"))
+        painter = QPainter(pixmap)
+        if not icon.isNull():
+            painter.drawPixmap(QRect(26, 40, 76, 76), icon)
+        painter.setPen(QColor("#e8a637"))
+        painter.setFont(QFont("Poppins", 16, QFont.Weight.Bold))
+        painter.drawText(QRect(113, 42, 290, 40), Qt.AlignmentFlag.AlignVCenter, "PLANETA PANETONES")
+        painter.setPen(QColor("#c2d1df"))
+        painter.setFont(QFont("Poppins", 10))
+        painter.drawText(QRect(113, 82, 285, 35), Qt.AlignmentFlag.AlignVCenter, "Preparando el launcher…")
+        painter.fillRect(30, 156, 360, 6, QColor("#38485a"))
+        painter.fillRect(30, 156, int(360 * percent / 100), 6, QColor("#e8a637"))
+        painter.end()
+        return pixmap
+
+    splash = QSplashScreen(splash_frame(5))
+    splash.show()
+    loading = {"percent": 5}
+    splash_timer = QTimer()
+
+    def animate_splash():
+        loading["percent"] = min(loading["percent"] + 3, 92)
+        splash.setPixmap(splash_frame(loading["percent"]))
+
+    splash_timer.timeout.connect(animate_splash)
+    splash_timer.start(45)
+    app.processEvents()
     window = QMainWindow()
     window.setWindowTitle("Planeta Panetones")
     window.resize(1280, 720)
@@ -112,7 +178,20 @@ def main() -> int:
     view.page().setWebChannel(channel)
     view.load(QUrl.fromLocalFile(str(APP_DIR / "index.html")))
     window.setCentralWidget(view)
-    window.show()
+    ready = {"loaded": False, "delay": False, "shown": False}
+
+    def reveal(*_args):
+        if ready["shown"] or not ready["loaded"] or not ready["delay"]:
+            return
+        ready["shown"] = True
+        splash_timer.stop()
+        splash.setPixmap(splash_frame(100))
+        window.show()
+        splash.finish(window)
+
+    view.loadFinished.connect(lambda _ok: (ready.__setitem__("loaded", True), reveal()))
+    QTimer.singleShot(1050, lambda: (ready.__setitem__("delay", True), reveal()))
+    QTimer.singleShot(8000, lambda: (ready.__setitem__("loaded", True), ready.__setitem__("delay", True), reveal()))
     return app.exec()
 
 
