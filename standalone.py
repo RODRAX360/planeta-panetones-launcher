@@ -1,17 +1,23 @@
 """Instalación, actualización, autenticación y arranque sin Modrinth."""
 
 import json
+import hashlib
 import os
+import re
 import subprocess
 import sys
 import threading
 import time
 import urllib.parse
 import webbrowser
+import urllib.request
+import uuid
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 
 import minecraft_launcher_lib as mll
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QImage, QPainter
 
 from updater import sync_pack
 
@@ -21,6 +27,7 @@ CONFIG_FILE = APP_DIR / "launcher-config.json"
 MINECRAFT_VERSION = "1.20.1"
 FORGE_VERSION = "47.4.20"
 FORGE_ID = f"{MINECRAFT_VERSION}-forge-{FORGE_VERSION}"
+NAME_PATTERN = re.compile(r"[A-Za-z0-9_]{3,16}\Z")
 
 
 def data_dir() -> Path:
@@ -42,6 +49,112 @@ def read_config() -> dict:
 
 def _account_path() -> Path:
     return data_dir() / "account.json"
+
+
+def _profiles_path() -> Path:
+    return data_dir() / "profiles.json"
+
+
+def _read_profiles() -> dict:
+    try:
+        data = json.loads(_profiles_path().read_text(encoding="utf-8"))
+        if isinstance(data.get("local", []), list):
+            return data
+    except (OSError, ValueError, TypeError):
+        pass
+    return {"selected": "microsoft", "local": []}
+
+
+def _save_profiles(data: dict) -> None:
+    path = _profiles_path()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_suffix(".json.part")
+    temporary.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    temporary.replace(path)
+
+
+def create_local_profile(name: str) -> None:
+    name = name.strip()
+    if not NAME_PATTERN.fullmatch(name):
+        raise ValueError("El nombre debe tener entre 3 y 16 caracteres: letras, números o guion bajo.")
+    data = _read_profiles()
+    if not any(item["name"].lower() == name.lower() for item in data["local"]):
+        data["local"].append({"name": name})
+    data["selected"] = "local:" + name
+    _save_profiles(data)
+
+
+def select_profile(identifier: str) -> None:
+    data = _read_profiles()
+    if identifier != "microsoft" and not any("local:" + item["name"] == identifier for item in data["local"]):
+        raise ValueError("No se encontró ese perfil local.")
+    data["selected"] = identifier
+    _save_profiles(data)
+
+
+def selected_profile() -> dict:
+    data = _read_profiles()
+    selection = data.get("selected", "microsoft")
+    if selection.startswith("local:"):
+        name = selection[6:]
+        if any(item["name"] == name for item in data["local"]):
+            raw = hashlib.md5(("OfflinePlayer:" + name).encode("utf-8")).digest()
+            value = bytearray(raw)
+            value[6] = value[6] & 0x0f | 0x30
+            value[8] = value[8] & 0x3f | 0x80
+            return {"type": "local", "name": name, "id": str(uuid.UUID(bytes=bytes(value))), "access_token": "0"}
+    return {"type": "microsoft", "name": account_name()}
+
+
+def _avatar_for(image: QImage, destination: Path) -> None:
+    canvas = QImage(64, 64, QImage.Format.Format_ARGB32)
+    canvas.fill(Qt.GlobalColor.transparent)
+    painter = QPainter(canvas)
+    painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform, False)
+    painter.drawImage(canvas.rect(), image.copy(8, 8, 8, 8))
+    overlay = image.copy(40, 8, 8, 8)
+    painter.drawImage(canvas.rect(), overlay)
+    painter.end()
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    if not canvas.save(str(destination), "PNG"):
+        raise RuntimeError("No se pudo guardar el avatar.")
+
+
+def set_local_skin(source: Path) -> None:
+    profile = selected_profile()
+    if profile["type"] != "local":
+        raise ValueError("Selecciona un perfil local antes de elegir una skin.")
+    if source.stat().st_size > 2 * 1024 * 1024:
+        raise ValueError("La PNG de la skin no puede superar 2 MiB.")
+    image = QImage(str(source))
+    if image.isNull() or (image.width(), image.height()) not in {(64, 64), (64, 32)}:
+        raise ValueError("La skin debe ser una PNG de Minecraft de 64×64 o 64×32 píxeles.")
+    name = profile["name"]
+    destination = data_dir() / "minecraft/CustomSkinLoader/LocalSkin/skins" / f"{name}.png"
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    if not image.save(str(destination), "PNG"):
+        raise RuntimeError("No se pudo guardar la skin.")
+    _avatar_for(image, data_dir() / "avatars" / f"local-{name}.png")
+
+
+def save_microsoft_avatar(account: dict) -> None:
+    skins = account.get("skins") or []
+    if not skins:
+        return
+    url = skins[0].get("url", "")
+    parsed = urllib.parse.urlparse(url)
+    if parsed.scheme != "https" or parsed.hostname != "textures.minecraft.net":
+        return
+    try:
+        with urllib.request.urlopen(url, timeout=12) as response:
+            content = response.read(1024 * 1024 + 1)
+        if len(content) > 1024 * 1024:
+            return
+        image = QImage.fromData(content, "PNG")
+        if not image.isNull() and image.width() >= 48 and image.height() >= 16:
+            _avatar_for(image, data_dir() / "avatars" / "microsoft.png")
+    except (OSError, ValueError):
+        pass
 
 
 def account_name() -> str | None:
@@ -114,6 +227,8 @@ def microsoft_login(status) -> dict:
             "Minecraft aún no autoriza esta aplicación. El Client ID de Planeta Panetones necesita permiso para la API de Minecraft."
         ) from exc
     save_account(account)
+    save_microsoft_avatar(account)
+    select_profile("microsoft")
     return account
 
 
@@ -137,6 +252,8 @@ def refreshed_account(status) -> dict:
     except Exception as exc:
         raise RuntimeError("La sesión caducó. Vuelve a iniciar sesión en Cuentas.") from exc
     save_account(account)
+    if not (data_dir() / "avatars/microsoft.png").is_file():
+        save_microsoft_avatar(account)
     return account
 
 
@@ -214,8 +331,26 @@ def launch_game(account: dict, game: Path, java: str) -> None:
 def game_state() -> dict:
     config = read_config()
     local = (data_dir() / "minecraft/.planeta-panetones-manifest.json").is_file()
+    manifest = data_dir() / "minecraft/.planeta-panetones-manifest.json"
+    if not manifest.is_file() and config.get("manifest_url", "").startswith("file:"):
+        manifest = APP_DIR / "publicar/manifest.json"
+    try:
+        mod_count = sum(entry["path"].startswith("mods/") for entry in json.loads(manifest.read_text(encoding="utf-8"))["files"])
+    except (OSError, ValueError, KeyError, TypeError):
+        mod_count = 0
+    profiles = _read_profiles()
+    selected = selected_profile()
+    avatar = (data_dir() / "avatars" / ("microsoft.png" if selected["type"] == "microsoft" else f"local-{selected['name']}.png"))
     return {
-        "account": account_name(),
+        "account": selected["name"],
+        "accountType": selected["type"],
+        "selectedProfile": profiles.get("selected", "microsoft"),
+        "localProfiles": [item["name"] for item in profiles["local"]],
+        "microsoftAccount": account_name(),
+        "avatar": avatar.as_uri() + f"?v={avatar.stat().st_mtime_ns}" if avatar.is_file() else None,
+        "localSkinSet": selected["type"] == "local" and (data_dir() / "minecraft/CustomSkinLoader/LocalSkin/skins" / f"{selected['name']}.png").is_file(),
+        "modCount": mod_count,
+        "discordConfigured": bool(str(config.get("discord_application_id", "")).strip()),
         "packConfigured": bool(config.get("manifest_url")),
         "localManifest": config.get("manifest_url", "").startswith("file:"),
         "clientConfigured": bool(config.get("microsoft_client_id")),
