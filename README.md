@@ -14,6 +14,8 @@ Launcher de escritorio independiente para **Minecraft: Java Edition 1.20.1** y *
 4. Antes de jugar, consulta `manifest.json` en el hosting del proyecto, descarga los archivos modificados y comprueba tamaño y SHA-256.
 5. Abre Minecraft con el modpack actualizado. Los mundos, capturas y otros archivos personales permanecen en el equipo del jugador.
 
+El launcher también permite crear perfiles locales con un nombre. Estos perfiles no tienen autenticación de Minecraft y sirven para mundos locales o servidores que los acepten; no pueden entrar a servidores que exigen una cuenta verificada. En Configuración → Cuentas, cada perfil local puede elegir una skin PNG de 64×64 o 64×32. La PNG queda en la carpeta local de Custom Skin Loader y el pack incluye el mod oficial `CustomSkinLoader_ForgeV2-14.28.jar` para mostrarla en el cliente. Otros jugadores solo verán esa skin si su cliente o servidor también sabe cargarla.
+
 La autenticación se realiza directamente entre el equipo del jugador y los servicios de Microsoft, Xbox y Minecraft. El servidor del modpack distribuye archivos del pack; no recibe credenciales ni tokens. La sesión renovable se guarda localmente en `account.json` con permisos restrictivos. El launcher no redistribuye los archivos base de Minecraft: los instala desde sus fuentes oficiales.
 
 ## Ejecutar desde el código fuente
@@ -32,9 +34,13 @@ El video de fondo del proyecto no está incluido en este repositorio. Si no exis
 
 La configuración está en [`launcher-config.json`](launcher-config.json). `microsoft_client_id` identifica la aplicación registrada en Microsoft Entra; `redirect_uri` debe coincidir con su URI de redirección. `manifest_url` será la URL HTTPS pública del manifiesto del pack. Si existe un directorio local `publicar/` y no hay URL configurada, el launcher puede usarlo para pruebas locales.
 
+La integración opcional con Discord Rich Presence usa `discord_application_id`. Para activarla se necesita crear una aplicación llamada **Planeta Panetones Launcher** en [Discord Developer Portal](https://discord.com/developers/applications) y copiar su Application ID a esa clave. Mientras esté vacía, el launcher funciona sin mostrar estado en Discord. Discord Desktop debe estar abierto y permitir compartir actividades.
+
 ## Publicar el modpack
 
 `publish_pack.py` prepara un directorio `publicar/` con `manifest.json` y `files/`. El manifiesto enumera rutas, tamaños y SHA-256. Este repositorio **no incluye** los mods, copias de seguridad, mundos ni configuraciones privadas de la instancia del creador. El contenido generado de `publicar/` se subirá por separado al hosting HTTPS del proyecto.
+
+`bundled_mods/CustomSkinLoader_ForgeV2-14.28.jar` es el binario oficial sin modificar de [Custom Skin Loader](https://modrinth.com/mod/customskinloader), distribuido como parte del pack según los términos indicados por sus autores.
 
 ```bash
 python publish_pack.py --version 2026.10.21.1
