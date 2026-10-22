@@ -17,6 +17,7 @@ from PySide6.QtWidgets import QApplication, QFileDialog, QMainWindow, QSplashScr
 
 import standalone
 from discord_presence import DiscordPresence
+from server_status import query_server
 
 APP_DIR = Path(__file__).resolve().parent
 
@@ -27,6 +28,10 @@ class Bridge(QObject):
     def __init__(self, parent=None):
         super().__init__(parent)
         self._lock = threading.Lock()
+        self._server_address = str(standalone.read_config().get("server_address", "")).strip()
+        self._server_status = query_server("")
+        self._server_status["configured"] = bool(self._server_address)
+        self._server_polling = False
 
     def _emit(self, kind: str, **fields):
         self.event.emit(json.dumps({"type": kind, **fields}, ensure_ascii=False))
@@ -34,9 +39,25 @@ class Bridge(QObject):
     @Slot(result=str)
     def getState(self) -> str:
         try:
-            return json.dumps({"ok": True, "state": standalone.game_state()})
+            state = standalone.game_state()
+            state["serverStatus"] = self._server_status
+            return json.dumps({"ok": True, "state": state})
         except Exception as exc:
             return json.dumps({"ok": False, "error": str(exc)})
+
+    def refresh_server_status(self) -> None:
+        if not self._server_address or self._server_polling:
+            return
+        self._server_polling = True
+
+        def check() -> None:
+            try:
+                self._server_status = query_server(self._server_address)
+                self._emit("server", status=self._server_status)
+            finally:
+                self._server_polling = False
+
+        threading.Thread(target=check, daemon=True).start()
 
     def _start(self, action: str) -> str:
         if not self._lock.acquire(blocking=False):
@@ -71,7 +92,9 @@ class Bridge(QObject):
         finally:
             self._lock.release()
             try:
-                self._emit("state", state=standalone.game_state())
+                state = standalone.game_state()
+                state["serverStatus"] = self._server_status
+                self._emit("state", state=state)
             except Exception as exc:
                 self._emit("error", text=str(exc))
 
@@ -135,21 +158,35 @@ def main() -> int:
     presence.start()
     app.aboutToQuit.connect(presence.stop)
     icon = QPixmap(str(APP_DIR / "assets/icono.png"))
+    poster = QPixmap(str(APP_DIR / "assets/portada.jpg"))
+    splash_state = {"message": "Preparando archivos…", "error": False}
 
     def splash_frame(percent: int) -> QPixmap:
-        pixmap = QPixmap(420, 205)
+        width, height = 400, 480
+        pixmap = QPixmap(width, height)
         pixmap.fill(QColor("#0b1524"))
         painter = QPainter(pixmap)
+        if not poster.isNull():
+            cover = poster.scaled(width, height, Qt.AspectRatioMode.KeepAspectRatioByExpanding,
+                                  Qt.TransformationMode.SmoothTransformation)
+            painter.drawPixmap(0, 0, cover.copy((cover.width() - width) // 2,
+                                                (cover.height() - height) // 2, width, height))
+        painter.fillRect(QRect(0, 0, width, height), QColor(4, 10, 20, 145))
         if not icon.isNull():
-            painter.drawPixmap(QRect(26, 40, 76, 76), icon)
-        painter.setPen(QColor("#e8a637"))
-        painter.setFont(QFont("Poppins", 16, QFont.Weight.Bold))
-        painter.drawText(QRect(113, 42, 290, 40), Qt.AlignmentFlag.AlignVCenter, "PLANETA PANETONES")
-        painter.setPen(QColor("#c2d1df"))
-        painter.setFont(QFont("Poppins", 10))
-        painter.drawText(QRect(113, 82, 285, 35), Qt.AlignmentFlag.AlignVCenter, "Preparando el launcher…")
-        painter.fillRect(30, 156, 360, 6, QColor("#38485a"))
-        painter.fillRect(30, 156, int(360 * percent / 100), 6, QColor("#e8a637"))
+            painter.drawPixmap(QRect(118, 102, 164, 164), icon)
+        painter.setPen(QColor("#ffffff"))
+        painter.setFont(QFont("Poppins", 19, QFont.Weight.Bold))
+        painter.drawText(QRect(16, 296, 368, 45), Qt.AlignmentFlag.AlignCenter, "Planeta Panetones")
+        painter.setPen(QColor("#ffc769"))
+        painter.setFont(QFont("Poppins", 11, QFont.Weight.Bold))
+        painter.drawText(QRect(20, 360, 360, 36), Qt.AlignmentFlag.AlignCenter, splash_state["message"])
+        painter.fillRect(42, 414, 316, 9, QColor("#263348"))
+        painter.fillRect(42, 414, int(316 * percent / 100), 9,
+                         QColor("#ec9f2e") if not splash_state["error"] else QColor("#e55c5c"))
+        painter.setPen(QColor("#c7d0de"))
+        painter.setFont(QFont("Poppins", 9))
+        painter.drawText(QRect(18, 437, 364, 20), Qt.AlignmentFlag.AlignCenter,
+                         "Launcher independiente · Forge 1.20.1")
         painter.end()
         return pixmap
 
@@ -178,6 +215,10 @@ def main() -> int:
     view.page().setWebChannel(channel)
     view.load(QUrl.fromLocalFile(str(APP_DIR / "index.html")))
     window.setCentralWidget(view)
+    server_timer = QTimer(window)
+    server_timer.timeout.connect(bridge.refresh_server_status)
+    server_timer.start(30000)
+    QTimer.singleShot(500, bridge.refresh_server_status)
     ready = {"loaded": False, "delay": False, "shown": False}
 
     def reveal(*_args):
@@ -189,9 +230,24 @@ def main() -> int:
         window.show()
         splash.finish(window)
 
-    view.loadFinished.connect(lambda _ok: (ready.__setitem__("loaded", True), reveal()))
+    def on_load_finished(ok: bool) -> None:
+        if ok:
+            ready["loaded"] = True
+            reveal()
+        else:
+            splash_state.update(message="No se pudo abrir la interfaz.", error=True)
+            splash_timer.stop()
+            splash.setPixmap(splash_frame(100))
+            QTimer.singleShot(5000, app.quit)
+
+    view.loadFinished.connect(on_load_finished)
     QTimer.singleShot(1050, lambda: (ready.__setitem__("delay", True), reveal()))
-    QTimer.singleShot(8000, lambda: (ready.__setitem__("loaded", True), ready.__setitem__("delay", True), reveal()))
+    def on_loading_timeout() -> None:
+        if not ready["shown"] and not splash_state["error"]:
+            splash_state.update(message="La carga está tardando más de lo esperado…")
+            splash.setPixmap(splash_frame(92))
+
+    QTimer.singleShot(8000, on_loading_timeout)
     return app.exec()
 
 

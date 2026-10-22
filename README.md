@@ -34,7 +34,9 @@ El video de fondo del proyecto no está incluido en este repositorio. Si no exis
 
 La configuración está en [`launcher-config.json`](launcher-config.json). `microsoft_client_id` identifica la aplicación registrada en Microsoft Entra; `redirect_uri` debe coincidir con su URI de redirección. `manifest_url` será la URL HTTPS pública del manifiesto del pack. Si existe un directorio local `publicar/` y no hay URL configurada, el launcher puede usarlo para pruebas locales.
 
-La integración opcional con Discord Rich Presence usa `discord_application_id`. Para activarla se necesita crear una aplicación llamada **Planeta Panetones Launcher** en [Discord Developer Portal](https://discord.com/developers/applications) y copiar su Application ID a esa clave. Mientras esté vacía, el launcher funciona sin mostrar estado en Discord. Discord Desktop debe estar abierto y permitir compartir actividades.
+La integración con Discord Rich Presence usa el `discord_application_id` de la aplicación **Planeta Panetones Launcher** creada en [Discord Developer Portal](https://discord.com/developers/applications). Discord Desktop debe estar abierto y permitir compartir actividades. No se requiere un bot ni un secreto de cliente para mostrar este estado local.
+
+La tarjeta superior muestra el estado del servidor oficial, jugadores conectados y latencia mediante una consulta directa desde el equipo del jugador. `server_address` admite un dominio o una IP con puerto, como `play.ejemplo.com:25565`. Está vacío mientras no exista una dirección pública; por eso la interfaz muestra «Servidor próximamente» y no inventa un ping.
 
 ## Publicar el modpack
 

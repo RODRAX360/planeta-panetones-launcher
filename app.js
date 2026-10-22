@@ -40,19 +40,50 @@ function notify(message) {
 
 function show(page) {
   for (const id of ['home', 'settings']) $(id).classList.toggle('active', id === page);
+  if (page === 'settings') document.querySelector('.settings-content').scrollTop = 0;
 }
 
 function tab(name) {
+  document.querySelector('.settings-content').scrollTop = 0;
   document.querySelectorAll('.tab').forEach(el => el.classList.toggle('active', el.dataset.tab === name));
   document.querySelectorAll('.tab-panel').forEach(el => el.classList.toggle('active', el.id === `${name}-panel`));
+}
+
+function renderServer(status) {
+  const text = $('instance-line');
+  const light = $('server-light');
+  const players = $('server-players');
+  const latency = $('server-latency');
+  light.className = 'server-light';
+  text.className = '';
+  if (!status?.configured) {
+    text.textContent = 'Servidor próximamente';
+    light.classList.add('pending');
+    text.classList.add('pending');
+    players.textContent = '—';
+    latency.textContent = 'Ping —';
+    $('server-detail').textContent = 'La dirección pública todavía no está disponible. Cuando exista, se podrá configurar para mostrar estado, jugadores y ping reales.';
+  } else if (!status.online) {
+    text.textContent = 'Apagado';
+    light.classList.add('offline');
+    text.classList.add('offline');
+    players.textContent = '0';
+    latency.textContent = 'Ping —';
+    $('server-detail').textContent = 'El servidor configurado no responde a la consulta de Minecraft.';
+  } else {
+    text.textContent = 'En línea';
+    light.classList.add('online');
+    text.classList.add('online');
+    players.textContent = `${status.players ?? 0}/${status.maximum ?? '—'}`;
+    latency.textContent = `Ping ${status.latencyMs} ms`;
+    $('server-detail').textContent = `${status.players ?? 0} jugadores conectados · ping ${status.latencyMs} ms.`;
+  }
 }
 
 function setState(raw) {
   const result = typeof raw === 'string' ? JSON.parse(raw) : raw;
   if (!result.ok) {
-    $('instance-line').textContent = result.error;
-    $('instance-badge').textContent = 'ERROR';
-    $('instance-badge').classList.add('error');
+    notify(result.error);
     return;
   }
   const state = result.state;
@@ -72,19 +103,16 @@ function setState(raw) {
   $('discord-detail').textContent = state.discordConfigured
     ? 'Discord mostrará Planeta Panetones Launcher cuando su aplicación de escritorio esté abierta.'
     : 'Falta el Application ID de Discord. El estado se activará cuando se configure.';
+  renderServer(state.serverStatus);
   $('manifest-source').textContent = state.localManifest
     ? 'Pack local preparado. Cuando tengas hosting, coloca su URL HTTPS en launcher-config.json.'
     : state.packConfigured
       ? 'El launcher descarga y verifica los archivos desde tu hosting antes de iniciar Minecraft.'
       : 'Falta la URL HTTPS del pack en launcher-config.json.';
   if (!state.packConfigured) {
-    $('instance-line').textContent = 'Falta configurar el servidor de archivos del pack.';
-    $('instance-badge').textContent = 'CONFIGURAR';
-    $('instance-badge').classList.add('error');
+    $('version-label').textContent = 'Pack pendiente de publicar';
   } else {
-    $('instance-line').textContent = `Minecraft 1.20.1 · Forge 47.4.20 · ${state.modCount || '—'} mods`;
-    $('instance-badge').textContent = state.installed ? 'INSTALADO' : 'LISTO PARA INSTALAR';
-    $('instance-badge').classList.remove('error');
+    $('version-label').textContent = `Forge 1.20.1 · ${state.modCount || '—'} mods`;
   }
 }
 
@@ -112,6 +140,8 @@ function handleEvent(raw) {
     setBusy(false);
   } else if (event.type === 'state') {
     setState({ok: true, state: event.state});
+  } else if (event.type === 'server') {
+    renderServer(event.status);
   }
 }
 
@@ -170,5 +200,5 @@ if (typeof QWebChannel !== 'undefined' && typeof qt !== 'undefined') {
   });
 } else {
   $('instance-line').textContent = 'Abre esta interfaz desde la aplicación de escritorio.';
-  $('instance-badge').textContent = 'VISTA PREVIA';
+  renderServer({configured: false});
 }
