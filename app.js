@@ -3,6 +3,33 @@ let operationRunning = false;
 const $ = (id) => document.getElementById(id);
 let toastTimer;
 
+function setAvatar(element, url, letter) {
+  element.textContent = url ? '' : (letter || 'P').charAt(0).toUpperCase();
+  element.style.backgroundImage = url ? `url("${url}")` : '';
+  element.classList.toggle('has-skin', !!url);
+}
+
+function renderProfiles(state) {
+  const list = $('profile-list');
+  list.replaceChildren();
+  const profiles = [{id: 'microsoft', label: state.microsoftAccount || 'Cuenta Microsoft', type: 'Microsoft'},
+    ...(state.localProfiles || []).map(name => ({id: `local:${name}`, label: name, type: 'Local'}))];
+  for (const profile of profiles) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'profile-option' + (state.selectedProfile === profile.id ? ' selected' : '');
+    button.textContent = `${profile.label} · ${profile.type}`;
+    button.addEventListener('click', () => bridge?.selectProfile(profile.id, applyResult));
+    list.append(button);
+  }
+}
+
+function applyResult(raw) {
+  const result = typeof raw === 'string' ? JSON.parse(raw) : raw;
+  if (!result.ok) notify(result.error);
+  else setState(result);
+}
+
 function notify(message) {
   const toast = $('toast');
   toast.textContent = message;
@@ -30,10 +57,21 @@ function setState(raw) {
   }
   const state = result.state;
   $('account-label').textContent = state.account || 'Cuenta';
-  $('account-detail').textContent = state.account
-    ? `Sesión guardada para ${state.account}. Se actualizará antes de iniciar Minecraft.`
-    : 'Inicia sesión con Microsoft para jugar. El launcher comprobará tu licencia de Minecraft.';
+  setAvatar($('account-avatar'), state.avatar, state.account);
+  setAvatar($('skin-avatar'), state.avatar, state.account);
+  $('account-detail').textContent = state.microsoftAccount
+    ? `Cuenta Microsoft conectada: ${state.microsoftAccount}. ${state.accountType === 'local' ? 'Ahora tienes seleccionado un perfil local.' : 'La sesión se actualizará antes de jugar.'}`
+    : 'Inicia sesión con Microsoft para jugar en servidores con autenticación. También puedes crear un perfil local.';
+  renderProfiles(state);
+  $('skin-card').hidden = state.accountType !== 'local';
+  $('skin-detail').textContent = state.localSkinSet
+    ? `Skin local de ${state.account} guardada en este equipo.`
+    : `Elige una skin PNG para ${state.account}.`;
   $('memory-label').textContent = `${Math.round(state.memoryMb / 1024 * 10) / 10} GiB`;
+  $('mod-count').textContent = state.modCount || '—';
+  $('discord-detail').textContent = state.discordConfigured
+    ? 'Discord mostrará Planeta Panetones Launcher cuando su aplicación de escritorio esté abierta.'
+    : 'Falta el Application ID de Discord. El estado se activará cuando se configure.';
   $('manifest-source').textContent = state.localManifest
     ? 'Pack local preparado. Cuando tengas hosting, coloca su URL HTTPS en launcher-config.json.'
     : state.packConfigured
@@ -44,7 +82,7 @@ function setState(raw) {
     $('instance-badge').textContent = 'CONFIGURAR';
     $('instance-badge').classList.add('error');
   } else {
-    $('instance-line').textContent = 'Minecraft 1.20.1 · Forge 47.4.20 · 133 mods';
+    $('instance-line').textContent = `Minecraft 1.20.1 · Forge 47.4.20 · ${state.modCount || '—'} mods`;
     $('instance-badge').textContent = state.installed ? 'INSTALADO' : 'LISTO PARA INSTALAR';
     $('instance-badge').classList.remove('error');
   }
@@ -97,6 +135,15 @@ $('account-button').addEventListener('click', () => { show('settings'); tab('acc
 $('back-button').addEventListener('click', () => show('home'));
 $('play-button').addEventListener('click', () => start('play'));
 $('login-button').addEventListener('click', () => start('login'));
+$('create-local').addEventListener('click', () => {
+  if (!bridge) return;
+  bridge.createLocalProfile($('local-name').value, raw => {
+    applyResult(raw);
+    if (JSON.parse(raw).ok) $('local-name').value = '';
+  });
+});
+$('local-name').addEventListener('keydown', event => { if (event.key === 'Enter') $('create-local').click(); });
+$('choose-skin').addEventListener('click', () => bridge?.chooseLocalSkin(applyResult));
 $('update-button').addEventListener('click', () => start('update'));
 $('open-folder').addEventListener('click', () => {
   if (bridge) bridge.openFolder(raw => {
