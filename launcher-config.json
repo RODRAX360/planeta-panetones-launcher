@@ -1,0 +1,6 @@
+{
+  "manifest_url": "",
+  "microsoft_client_id": "51df3350-f28d-4ba7-b819-b508408cd0c3",
+  "redirect_uri": "http://localhost:8765/callback",
+  "memory_mb": 11712
+}
