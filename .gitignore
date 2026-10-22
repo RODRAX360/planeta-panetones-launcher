@@ -1,0 +1,13 @@
+.venv/
+__pycache__/
+*.py[cod]
+publicar/
+account.json
+*.log
+*.part
+*.bak
+crash-reports/
+logs/
+saves/
+screenshots/
+Planeta-Panetones.desktop
