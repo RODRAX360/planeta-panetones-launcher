@@ -2,14 +2,16 @@
 """Launcher independiente de Planeta Panetones."""
 
 import json
+import math
 import os
 import subprocess
 import sys
 import threading
+import time
 from pathlib import Path
 
-from PySide6.QtCore import QObject, QRect, QTimer, QUrl, Signal, Slot, Qt
-from PySide6.QtGui import QPixmap, QPainter, QColor, QFont
+from PySide6.QtCore import QObject, QRect, QRectF, QTimer, QUrl, Signal, Slot, Qt
+from PySide6.QtGui import QPixmap, QPainter, QColor, QCursor, QFont, QPainterPath, QPen
 from PySide6.QtWebChannel import QWebChannel
 from PySide6.QtWebEngineCore import QWebEngineSettings
 from PySide6.QtWebEngineWidgets import QWebEngineView
@@ -152,31 +154,52 @@ class Bridge(QObject):
 
 def main() -> int:
     os.environ.setdefault("QTWEBENGINE_CHROMIUM_FLAGS", "--autoplay-policy=no-user-gesture-required")
+    if sys.platform.startswith("linux") and os.environ.get("XDG_SESSION_TYPE") == "wayland" \
+            and os.environ.get("DISPLAY") and not os.environ.get("QT_QPA_PLATFORM"):
+        os.environ["QT_QPA_PLATFORM"] = "xcb"
     app = QApplication(sys.argv)
     app.setApplicationName("Planeta Panetones")
+
+    def center_window(widget) -> None:
+        screen = app.screenAt(QCursor.pos()) or app.primaryScreen()
+        if screen:
+            area = screen.availableGeometry()
+            widget.move(area.x() + (area.width() - widget.width()) // 2,
+                        area.y() + (area.height() - widget.height()) // 2)
+
     presence = DiscordPresence(standalone.read_config().get("discord_application_id", ""))
     presence.start()
     app.aboutToQuit.connect(presence.stop)
     icon = QPixmap(str(APP_DIR / "assets/icono.png"))
     poster = QPixmap(str(APP_DIR / "assets/portada.jpg"))
     splash_state = {"message": "Preparando archivos…", "error": False}
+    animation_started = time.monotonic()
 
     def splash_frame(percent: int) -> QPixmap:
         width, height = 400, 480
         pixmap = QPixmap(width, height)
-        pixmap.fill(QColor("#0b1524"))
+        pixmap.fill(Qt.GlobalColor.transparent)
         painter = QPainter(pixmap)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        outline = QPainterPath()
+        outline.addRoundedRect(QRectF(0, 0, width, height), 18, 18)
+        painter.setClipPath(outline)
+        painter.fillRect(QRect(0, 0, width, height), QColor("#0b1524"))
         if not poster.isNull():
             cover = poster.scaled(width, height, Qt.AspectRatioMode.KeepAspectRatioByExpanding,
                                   Qt.TransformationMode.SmoothTransformation)
             painter.drawPixmap(0, 0, cover.copy((cover.width() - width) // 2,
                                                 (cover.height() - height) // 2, width, height))
         painter.fillRect(QRect(0, 0, width, height), QColor(4, 10, 20, 145))
+        elapsed = time.monotonic() - animation_started
+        painter.setOpacity(min(1.0, max(0.0, elapsed / 0.45)))
         if not icon.isNull():
-            painter.drawPixmap(QRect(118, 102, 164, 164), icon)
+            bob = round(6 * math.sin(elapsed * math.tau / 2.4))
+            painter.drawPixmap(QRect(118, 102 + bob, 164, 164), icon)
         painter.setPen(QColor("#ffffff"))
         painter.setFont(QFont("Poppins", 19, QFont.Weight.Bold))
         painter.drawText(QRect(16, 296, 368, 45), Qt.AlignmentFlag.AlignCenter, "Planeta Panetones")
+        painter.setOpacity(1.0)
         painter.setPen(QColor("#f2f3f3"))
         painter.setFont(QFont("Poppins", 11, QFont.Weight.Bold))
         painter.drawText(QRect(20, 360, 360, 36), Qt.AlignmentFlag.AlignCenter, splash_state["message"])
@@ -191,17 +214,25 @@ def main() -> int:
         painter.setPen(QColor("#f2f3f3"))
         painter.setFont(QFont("Poppins", 9, QFont.Weight.Bold))
         painter.drawText(QRect(18, 453, 364, 18), Qt.AlignmentFlag.AlignCenter, "@rodrax360")
+        painter.setClipping(False)
+        painter.setPen(QPen(QColor(255, 255, 255, 36), 1))
+        painter.drawRoundedRect(QRectF(0.5, 0.5, width - 1, height - 1), 18, 18)
         painter.end()
         return pixmap
 
-    splash = QSplashScreen(splash_frame(5))
+    splash = QSplashScreen(splash_frame(5), Qt.WindowType.SplashScreen | Qt.WindowType.FramelessWindowHint)
+    splash.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+    splash.setMask(splash.pixmap().mask())
     splash.show()
+    center_window(splash)
     loading = {"percent": 5}
     splash_timer = QTimer()
 
     def animate_splash():
         loading["percent"] = min(loading["percent"] + 3, 92)
-        splash.setPixmap(splash_frame(loading["percent"]))
+        frame = splash_frame(loading["percent"])
+        splash.setPixmap(frame)
+        splash.setMask(frame.mask())
 
     splash_timer.timeout.connect(animate_splash)
     splash_timer.start(45)
@@ -210,6 +241,7 @@ def main() -> int:
     window.setWindowTitle("Planeta Panetones")
     window.resize(1280, 720)
     window.setMinimumSize(960, 600)
+    center_window(window)
     view = QWebEngineView(window)
     view.settings().setAttribute(QWebEngineSettings.WebAttribute.PlaybackRequiresUserGesture, False)
     view.settings().setAttribute(QWebEngineSettings.WebAttribute.LocalContentCanAccessFileUrls, True)
@@ -230,9 +262,8 @@ def main() -> int:
             return
         ready["shown"] = True
         splash_timer.stop()
-        splash.setPixmap(splash_frame(100))
         window.show()
-        splash.finish(window)
+        splash.close()
 
     def on_load_finished(ok: bool) -> None:
         if ok:
