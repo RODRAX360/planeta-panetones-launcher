@@ -87,7 +87,8 @@ function setState(raw) {
     return;
   }
   const state = result.state;
-  $('account-label').textContent = state.account || 'Cuenta';
+  $('account-button').title = state.account ? `Cuenta: ${state.account}` : 'Cuenta de Minecraft';
+  $('account-button').setAttribute('aria-label', $('account-button').title);
   setAvatar($('account-avatar'), state.avatar, state.account);
   setAvatar($('skin-avatar'), state.avatar, state.account);
   $('account-detail').textContent = state.microsoftAccount
@@ -109,11 +110,6 @@ function setState(raw) {
     : state.packConfigured
       ? 'El launcher descarga y verifica los archivos desde tu hosting antes de iniciar Minecraft.'
       : 'Falta la URL HTTPS del pack en launcher-config.json.';
-  if (!state.packConfigured) {
-    $('version-label').textContent = 'Pack pendiente de publicar';
-  } else {
-    $('version-label').textContent = `Forge 1.20.1 · ${state.modCount || '—'} mods`;
-  }
 }
 
 function setBusy(busy) {

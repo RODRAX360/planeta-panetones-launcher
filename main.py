@@ -177,12 +177,13 @@ def main() -> int:
         painter.setPen(QColor("#ffffff"))
         painter.setFont(QFont("Poppins", 19, QFont.Weight.Bold))
         painter.drawText(QRect(16, 296, 368, 45), Qt.AlignmentFlag.AlignCenter, "Planeta Panetones")
-        painter.setPen(QColor("#ffc769"))
+        painter.setPen(QColor("#f2f3f3"))
         painter.setFont(QFont("Poppins", 11, QFont.Weight.Bold))
         painter.drawText(QRect(20, 360, 360, 36), Qt.AlignmentFlag.AlignCenter, splash_state["message"])
-        painter.fillRect(42, 414, 316, 9, QColor("#263348"))
-        painter.fillRect(42, 414, int(316 * percent / 100), 9,
-                         QColor("#ec9f2e") if not splash_state["error"] else QColor("#e55c5c"))
+        painter.fillRect(40, 412, 320, 13, QColor("#030303"))
+        painter.fillRect(43, 415, 314, 7, QColor("#171717"))
+        painter.fillRect(43, 415, int(314 * percent / 100), 7,
+                         QColor("#d8dcdf") if not splash_state["error"] else QColor("#e55c5c"))
         painter.setPen(QColor("#c7d0de"))
         painter.setFont(QFont("Poppins", 9))
         painter.drawText(QRect(18, 437, 364, 20), Qt.AlignmentFlag.AlignCenter,
