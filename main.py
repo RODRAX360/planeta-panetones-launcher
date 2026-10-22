@@ -185,9 +185,12 @@ def main() -> int:
         painter.fillRect(43, 415, int(314 * percent / 100), 7,
                          QColor("#d8dcdf") if not splash_state["error"] else QColor("#e55c5c"))
         painter.setPen(QColor("#c7d0de"))
-        painter.setFont(QFont("Poppins", 9))
-        painter.drawText(QRect(18, 437, 364, 20), Qt.AlignmentFlag.AlignCenter,
+        painter.setFont(QFont("Poppins", 8))
+        painter.drawText(QRect(18, 431, 364, 18), Qt.AlignmentFlag.AlignCenter,
                          "Launcher independiente · Forge 1.20.1")
+        painter.setPen(QColor("#f2f3f3"))
+        painter.setFont(QFont("Poppins", 9, QFont.Weight.Bold))
+        painter.drawText(QRect(18, 453, 364, 18), Qt.AlignmentFlag.AlignCenter, "@rodrax360")
         painter.end()
         return pixmap
 
