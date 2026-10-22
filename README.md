@@ -4,6 +4,8 @@ Launcher de escritorio independiente para **Minecraft: Java Edition 1.20.1** y *
 
 > **Estado:** en desarrollo. El inicio de sesión con Microsoft ya llega a Minecraft Services, pero el Client ID de esta aplicación está pendiente de autorización para la API de Minecraft. El hosting público del modpack también está pendiente. Todavía no hay una versión final para jugadores.
 
+**For Minecraft API reviewers:** this is a desktop launcher for a Forge 1.20.1 modpack. Players authenticate with their own Microsoft accounts through the system browser using OAuth 2.0 authorization code with PKCE. The application exchanges tokens directly with Microsoft, Xbox and Minecraft services to verify ownership and launch the player's licensed game. Credentials and tokens are never sent to our modpack server. The app is awaiting approval for Minecraft Services; no production release is available yet.
+
 ## Cómo funciona
 
 1. El jugador inicia sesión en el navegador de Microsoft con OAuth 2.0 y PKCE. El launcher no solicita su contraseña.
@@ -25,6 +27,8 @@ python -m venv .venv
 ```
 
 En Windows, usa `.venv\\Scripts\\python.exe` para ejecutar `main.py` después de instalar las dependencias.
+
+El video de fondo del proyecto no está incluido en este repositorio. Si no existe `assets/fondo.mp4`, la interfaz muestra la imagen `assets/portada.jpg`.
 
 La configuración está en [`launcher-config.json`](launcher-config.json). `microsoft_client_id` identifica la aplicación registrada en Microsoft Entra; `redirect_uri` debe coincidir con su URI de redirección. `manifest_url` será la URL HTTPS pública del manifiesto del pack. Si existe un directorio local `publicar/` y no hay URL configurada, el launcher puede usarlo para pruebas locales.
 
