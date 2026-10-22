@@ -78,7 +78,10 @@ def create_local_profile(name: str) -> None:
     if not NAME_PATTERN.fullmatch(name):
         raise ValueError("El nombre debe tener entre 3 y 16 caracteres: letras, números o guion bajo.")
     data = _read_profiles()
-    if not any(item["name"].lower() == name.lower() for item in data["local"]):
+    existing = next((item["name"] for item in data["local"] if item["name"].lower() == name.lower()), None)
+    if existing:
+        name = existing
+    else:
         data["local"].append({"name": name})
     data["selected"] = "local:" + name
     _save_profiles(data)
@@ -126,6 +129,10 @@ def set_local_skin(source: Path) -> None:
         raise ValueError("Selecciona un perfil local antes de elegir una skin.")
     if source.stat().st_size > 2 * 1024 * 1024:
         raise ValueError("La PNG de la skin no puede superar 2 MiB.")
+    with source.open("rb") as stream:
+        signature = stream.read(8)
+    if source.suffix.lower() != ".png" or signature != b"\x89PNG\r\n\x1a\n":
+        raise ValueError("El archivo debe ser una imagen PNG.")
     image = QImage(str(source))
     if image.isNull() or (image.width(), image.height()) not in {(64, 64), (64, 32)}:
         raise ValueError("La skin debe ser una PNG de Minecraft de 64×64 o 64×32 píxeles.")
