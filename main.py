@@ -128,6 +128,46 @@ class Bridge(QObject):
         except Exception as exc:
             return json.dumps({"ok": False, "error": str(exc)}, ensure_ascii=False)
 
+    @Slot(str, result=str)
+    def removeLocalProfile(self, name: str) -> str:
+        try:
+            standalone.remove_local_profile(name)
+            return self.getState()
+        except Exception as exc:
+            return json.dumps({"ok": False, "error": str(exc)}, ensure_ascii=False)
+
+    @Slot(str, result=str)
+    def removeMicrosoftAccount(self, identifier: str) -> str:
+        try:
+            standalone.remove_microsoft_account(identifier)
+            return self.getState()
+        except Exception as exc:
+            return json.dumps({"ok": False, "error": str(exc)}, ensure_ascii=False)
+
+    @Slot(int, result=str)
+    def saveMemory(self, value: int) -> str:
+        try:
+            standalone.set_memory_mb(value)
+            return self.getState()
+        except Exception as exc:
+            return json.dumps({"ok": False, "error": str(exc)}, ensure_ascii=False)
+
+    @Slot(int, int, result=str)
+    def saveResolution(self, width: int, height: int) -> str:
+        try:
+            standalone.set_resolution(width, height)
+            return self.getState()
+        except Exception as exc:
+            return json.dumps({"ok": False, "error": str(exc)}, ensure_ascii=False)
+
+    @Slot(result=str)
+    def resetResolution(self) -> str:
+        try:
+            standalone.reset_resolution()
+            return self.getState()
+        except Exception as exc:
+            return json.dumps({"ok": False, "error": str(exc)}, ensure_ascii=False)
+
     @Slot(result=str)
     def chooseLocalSkin(self) -> str:
         try:
@@ -142,6 +182,19 @@ class Bridge(QObject):
     def openFolder(self) -> str:
         try:
             folder = standalone.data_dir() / "minecraft"
+            folder.mkdir(parents=True, exist_ok=True)
+            if sys.platform == "win32":
+                os.startfile(folder)
+            else:
+                subprocess.Popen(["xdg-open", str(folder)], start_new_session=True)
+            return json.dumps({"ok": True})
+        except Exception as exc:
+            return json.dumps({"ok": False, "error": str(exc)})
+
+    @Slot(result=str)
+    def openModsFolder(self) -> str:
+        try:
+            folder = standalone.data_dir() / "minecraft/mods"
             folder.mkdir(parents=True, exist_ok=True)
             if sys.platform == "win32":
                 os.startfile(folder)

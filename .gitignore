@@ -3,6 +3,8 @@ __pycache__/
 *.py[cod]
 publicar/
 account.json
+accounts.json
+preferences.json
 *.log
 *.part
 *.bak

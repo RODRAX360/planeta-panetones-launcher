@@ -14,9 +14,9 @@ Launcher de escritorio independiente para **Minecraft: Java Edition 1.20.1** y *
 4. Antes de jugar, consulta `manifest.json` en el hosting del proyecto, descarga los archivos modificados y comprueba tamaño y SHA-256.
 5. Abre Minecraft con el modpack actualizado. Los mundos, capturas y otros archivos personales permanecen en el equipo del jugador.
 
-El launcher también permite crear perfiles locales con un nombre. Estos perfiles no tienen autenticación de Minecraft y sirven para mundos locales o servidores que los acepten; no pueden entrar a servidores que exigen una cuenta verificada. En Configuración → Cuentas, cada perfil local puede elegir una skin PNG de 64×64 o 64×32. La PNG queda en la carpeta local de Custom Skin Loader y el pack incluye el mod oficial `CustomSkinLoader_ForgeV2-14.28.jar` para mostrarla en el cliente. Otros jugadores solo verán esa skin si su cliente o servidor también sabe cargarla.
+El launcher permite guardar y elegir varias cuentas Microsoft y crear perfiles locales con un nombre. Los perfiles locales no tienen autenticación de Minecraft y sirven para mundos locales o servidores que los acepten; no pueden entrar a servidores que exigen una cuenta verificada. En Configuración → Cuentas, cada perfil local puede elegir una skin PNG de 64×64 o 64×32. La PNG queda en la carpeta local de Custom Skin Loader y el pack incluye el mod oficial `CustomSkinLoader_ForgeV2-14.28.jar` para mostrarla en el cliente. Otros jugadores solo verán esa skin si su cliente o servidor también sabe cargarla.
 
-La autenticación se realiza directamente entre el equipo del jugador y los servicios de Microsoft, Xbox y Minecraft. El servidor del modpack distribuye archivos del pack; no recibe credenciales ni tokens. La sesión renovable se guarda localmente en `account.json` con permisos restrictivos. El launcher no redistribuye los archivos base de Minecraft: los instala desde sus fuentes oficiales.
+La autenticación se realiza directamente entre el equipo del jugador y los servicios de Microsoft, Xbox y Minecraft. El servidor del modpack distribuye archivos del pack; no recibe credenciales ni tokens. Las sesiones renovables se guardan localmente en `accounts.json` con permisos restrictivos. Si había una sesión en el antiguo `account.json`, se conserva al migrar. El launcher no redistribuye los archivos base de Minecraft: los instala desde sus fuentes oficiales.
 
 ## Ejecutar desde el código fuente
 
@@ -33,6 +33,8 @@ En Windows, usa `.venv\\Scripts\\python.exe` para ejecutar `main.py` después de
 El video de fondo del proyecto no está incluido en este repositorio. Si no existe `assets/fondo.mp4`, la interfaz muestra la imagen `assets/portada.jpg`.
 
 La configuración está en [`launcher-config.json`](launcher-config.json). `microsoft_client_id` identifica la aplicación registrada en Microsoft Entra; `redirect_uri` debe coincidir con su URI de redirección. `manifest_url` será la URL HTTPS pública del manifiesto del pack. Si existe un directorio local `publicar/` y no hay URL configurada, el launcher puede usarlo para pruebas locales.
+
+Cada jugador puede ajustar la RAM en **Configuración → Java** y la resolución de inicio en **Configuración → Minecraft**. Esas preferencias se guardan en `PlanetaPanetones/preferences.json` dentro de la carpeta de datos de su usuario, de modo que no modifican el pack ni el repositorio. En Minecraft también puede abrir la instancia y la carpeta de mods. Los mods añadidos por el jugador se conservan si no coinciden con archivos administrados por el manifiesto.
 
 La integración con Discord Rich Presence usa el `discord_application_id` de la aplicación **Planeta Panetones Launcher** creada en [Discord Developer Portal](https://discord.com/developers/applications). Discord Desktop debe estar abierto y permitir compartir actividades. No se requiere un bot ni un secreto de cliente para mostrar este estado local.
 
@@ -51,6 +53,6 @@ python publish_pack.py --version 2026.10.21.1
 ## Privacidad y alcance
 
 - El Client ID es público; no es una contraseña ni un secreto de cliente.
-- Nunca se debe subir `account.json`, tokens, mundos, logs ni datos personales al repositorio.
+- Nunca se deben subir `account.json`, `accounts.json`, tokens, mundos, logs ni datos personales al repositorio.
 - El acceso a Minecraft Services depende de la autorización del Client ID por parte de Minecraft. Registrar la aplicación en Microsoft Entra no concede ese permiso por sí solo.
 - Este proyecto no está afiliado a Mojang o Microsoft.

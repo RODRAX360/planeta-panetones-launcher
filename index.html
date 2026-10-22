@@ -57,15 +57,15 @@
         <div class="panel-card">
           <h3>Tu cuenta de Minecraft</h3>
           <p id="account-detail">Inicia sesión con Microsoft para jugar. El launcher comprobará tu licencia de Minecraft.</p>
-          <button type="button" class="action-button" id="login-button">Iniciar sesión con Microsoft</button>
+          <button type="button" class="action-button secondary account-add-button" id="login-button">＋ Añadir una nueva cuenta Microsoft</button>
         </div>
         <div class="panel-card">
-          <h3>Perfiles</h3>
+          <h3>Tus cuentas</h3>
           <p>Elige una cuenta Microsoft o un perfil local. Los perfiles locales no tienen licencia verificada y solo pueden entrar a mundos y servidores que los acepten.</p>
           <div class="profile-list" id="profile-list"></div>
           <div class="button-row profile-create">
             <input id="local-name" type="text" maxlength="16" placeholder="Nombre del perfil local" aria-label="Nombre del perfil local" autocomplete="off">
-            <button type="button" class="action-button" id="create-local">Crear perfil local</button>
+            <button type="button" class="action-button secondary" id="create-local">Crear perfil local</button>
           </div>
         </div>
         <div class="panel-card" id="skin-card" hidden>
@@ -80,20 +80,48 @@
         <div class="panel-card">
           <h3>Java propio del launcher</h3>
           <p>Minecraft y Java 17 se descargan a la carpeta de Planeta Panetones durante la primera instalación.</p>
-          <p class="muted">Memoria asignada: <strong id="memory-label">—</strong>.</p>
+        </div>
+        <div class="panel-card">
+          <h3>Memoria para Minecraft</h3>
+          <p>Elige cuánta RAM puede utilizar el juego. Deja memoria libre para el sistema y otras aplicaciones.</p>
+          <div class="memory-control">
+            <input id="memory-range" type="range" min="2048" max="32768" step="64" aria-label="Memoria asignada a Minecraft">
+            <div class="memory-entry"><input id="memory-input" type="number" min="2048" max="32768" step="64" aria-label="Memoria en MiB"><span>MiB</span></div>
+          </div>
+          <p class="muted">Asignada: <strong id="memory-label">—</strong> · Disponible en el equipo: <strong id="system-memory-label">—</strong></p>
+          <button type="button" class="action-button secondary" id="save-memory">Guardar RAM</button>
         </div>
       </section>
       <section class="tab-panel" id="minecraft-panel">
         <h2>Minecraft</h2>
+        <div class="panel-card">
+          <h3>Resolución de Minecraft</h3>
+          <p>Personaliza el tamaño de la ventana al iniciar el juego. La resolución predeterminada es 854 × 480; 1280 × 720 suele verse mejor en pantallas actuales.</p>
+          <div class="resolution-control">
+            <input id="resolution-width" type="number" min="640" max="7680" value="854" aria-label="Ancho en píxeles">
+            <span>×</span>
+            <input id="resolution-height" type="number" min="360" max="4320" value="480" aria-label="Alto en píxeles">
+          </div>
+          <div class="button-row">
+            <button type="button" class="action-button secondary" id="save-resolution">Guardar resolución</button>
+            <button type="button" class="action-button secondary" id="reset-resolution">Restablecer a 854 × 480</button>
+          </div>
+          <p class="muted" id="resolution-status">Se usa la resolución predeterminada.</p>
+        </div>
         <div class="panel-card details">
           <div><span>Versión</span><strong id="minecraft-version">1.20.1</strong></div>
           <div><span>Cargador</span><strong id="forge-version">Forge</strong></div>
           <div><span>Mods del pack</span><strong id="mod-count">—</strong></div>
           <div><span>Instancia</span><strong>Planeta Panetones</strong></div>
         </div>
-        <div class="button-row">
-          <button type="button" class="action-button" id="open-folder">Abrir carpeta</button>
-          <button type="button" class="action-button secondary" id="update-button">Instalar / actualizar</button>
+        <div class="panel-card">
+          <h3>Instancia y mods</h3>
+          <p>Abre la carpeta de Planeta Panetones para ver tus mundos, capturas y archivos. Puedes añadir mods propios en la carpeta de mods; los archivos administrados por el pack se verificarán al iniciar.</p>
+          <div class="button-row">
+            <button type="button" class="action-button secondary" id="open-folder">Abrir instancia</button>
+            <button type="button" class="action-button secondary" id="open-mods-folder">Abrir mods</button>
+            <button type="button" class="action-button secondary" id="update-button">Instalar / actualizar</button>
+          </div>
         </div>
       </section>
       <section class="tab-panel" id="launcher-panel">
@@ -121,8 +149,10 @@
         <h2>Créditos</h2>
         <div class="panel-card">
           <h3>Planeta Panetones</h3>
-          <p>Logo y video proporcionados por Rodrax360.</p>
-          <p>Interfaz inspirada en el launcher InTheParadise, cuya comisión compartiste como referencia. Este launcher instala y arranca Minecraft por cuenta propia.</p>
+          <p><strong>Creado y diseñado por Rodrax360.</strong></p>
+          <p>Planeta Panetones nace para convertir el acceso a su mundo de Minecraft en una experiencia propia: una puerta de entrada con identidad, ambiente y detalles pensados para su comunidad.</p>
+          <p>Desde el primer momento hasta el inicio de cada partida, este launcher acompaña la aventura y reúne todo lo necesario para volver a explorar, construir y compartir.</p>
+          <p class="muted">Hecho con dedicación para quienes forman parte de Planeta Panetones. · @rodrax360</p>
         </div>
       </section>
     </div>
