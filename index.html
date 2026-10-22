@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Planeta Panetones</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="qrc:///qtwebchannel/qwebchannel.js"></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <video id="background-video" autoplay muted loop playsinline poster="assets/portada.jpg">
+    <source src="assets/fondo.mp4" type="video/mp4">
+  </video>
+  <div class="shade" aria-hidden="true"></div>
+  <div class="window-title">PLANETA PANETONES</div>
+  <img class="brand" src="assets/logo.png" alt="Planeta Panetones">
+
+  <main id="home" class="screen active">
+    <section class="instance-card" aria-label="Instancia">
+      <img class="instance-icon" src="assets/icono.png" alt="">
+      <div>
+        <h1>Planeta Panetones</h1>
+        <p id="instance-line">Preparando el pack Forge 1.20.1…</p>
+      </div>
+      <span id="instance-badge" class="badge">COMPROBANDO</span>
+    </section>
+
+    <nav class="bottom-bar" aria-label="Controles principales">
+      <button class="account-button" id="account-button" type="button" title="Cuenta de Minecraft">
+        <span class="avatar">P</span><span id="account-label">Cuenta</span>
+      </button>
+      <div class="play-group">
+        <button class="play-button" id="play-button" type="button">▶&nbsp; JUGAR</button>
+        <div class="instance-label"><strong>Planeta Panetones</strong><span id="version-label">Forge 1.20.1</span></div>
+      </div>
+      <button class="settings-button" id="settings-button" type="button" title="Configuración" aria-label="Configuración">⚙</button>
+    </nav>
+    <div class="download-status" id="download-status" aria-live="polite">
+      <span id="download-text"></span>
+      <progress id="download-progress" max="100" value="0"></progress>
+    </div>
+  </main>
+
+  <main id="settings" class="screen" aria-label="Configuración">
+    <aside class="settings-nav">
+      <h2>Configuración</h2>
+      <button type="button" class="tab active" data-tab="accounts">Cuentas</button>
+      <button type="button" class="tab" data-tab="java">Java</button>
+      <button type="button" class="tab" data-tab="minecraft">Minecraft</button>
+      <button type="button" class="tab" data-tab="launcher">Launcher</button>
+      <button type="button" class="tab" data-tab="credits">Créditos</button>
+      <button type="button" class="back-button" id="back-button">Volver</button>
+    </aside>
+    <div class="settings-content">
+      <section class="tab-panel active" id="accounts-panel">
+        <h2>Cuentas</h2>
+        <div class="panel-card">
+          <h3>Tu cuenta de Minecraft</h3>
+          <p id="account-detail">Inicia sesión con Microsoft para jugar. El launcher comprobará tu licencia de Minecraft.</p>
+          <button type="button" class="action-button" id="login-button">Iniciar sesión con Microsoft</button>
+        </div>
+      </section>
+      <section class="tab-panel" id="java-panel">
+        <h2>Java y memoria</h2>
+        <div class="panel-card">
+          <h3>Java propio del launcher</h3>
+          <p>Minecraft y Java 17 se descargan a la carpeta de Planeta Panetones durante la primera instalación.</p>
+          <p class="muted">Memoria asignada: <strong id="memory-label">—</strong>.</p>
+        </div>
+      </section>
+      <section class="tab-panel" id="minecraft-panel">
+        <h2>Minecraft</h2>
+        <div class="panel-card details">
+          <div><span>Versión</span><strong id="minecraft-version">1.20.1</strong></div>
+          <div><span>Cargador</span><strong id="forge-version">Forge</strong></div>
+          <div><span>Mods del pack</span><strong id="mod-count">133</strong></div>
+          <div><span>Instancia</span><strong>Planeta Panetones</strong></div>
+        </div>
+        <div class="button-row">
+          <button type="button" class="action-button" id="open-folder">Abrir carpeta</button>
+          <button type="button" class="action-button secondary" id="update-button">Instalar / actualizar</button>
+        </div>
+      </section>
+      <section class="tab-panel" id="launcher-panel">
+        <h2>Launcher</h2>
+        <div class="panel-card">
+          <h3>Fondo animado</h3>
+          <p>Video «minecraft-earth.3840x2160.mp4» en bucle.</p>
+          <label class="switch-row"><span>Reproducir video</span><input id="video-toggle" type="checkbox" checked></label>
+        </div>
+        <div class="panel-card">
+          <h3>Actualizaciones del pack</h3>
+          <p id="manifest-source">El launcher comprobará el manifiesto del pack antes de iniciar Minecraft.</p>
+          <p>Los mundos, capturas y archivos personales permanecen en la carpeta del jugador cuando se actualiza el pack.</p>
+        </div>
+      </section>
+      <section class="tab-panel" id="credits-panel">
+        <h2>Créditos</h2>
+        <div class="panel-card">
+          <h3>Planeta Panetones</h3>
+          <p>Logo y video proporcionados por Rodrax360.</p>
+          <p>Interfaz inspirada en el launcher InTheParadise, cuya comisión compartiste como referencia. Este launcher instala y arranca Minecraft por cuenta propia.</p>
+        </div>
+      </section>
+    </div>
+  </main>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+</body>
+</html>
