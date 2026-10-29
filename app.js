@@ -1,266 +1,459 @@
 let bridge = null;
+let currentState = null;
 let operationRunning = false;
-const $ = (id) => document.getElementById(id);
-let toastTimer;
+let routeInitialized = false;
+let settingsReturnPage = 'instances';
+let activeOperation = null;
+let toastTimer = null;
+let videoSourceLoaded = false;
 
-function setAvatar(element, url, letter) {
-  element.textContent = url ? '' : (letter || 'P').charAt(0).toUpperCase();
-  element.style.backgroundImage = url ? `url("${url}")` : '';
-  element.classList.toggle('has-skin', !!url);
-}
+const $ = id => document.getElementById(id);
+const pages = ['auth', 'instances', 'home', 'settings'];
+const video = $('background-video');
+const videoToggle = $('video-toggle');
 
-function renderProfiles(state) {
-  const list = $('profile-list');
-  list.replaceChildren();
-  const profiles = [
-    ...(state.microsoftAccounts || []).map(account => ({id: `microsoft:${account.id}`, label: account.name, type: 'Microsoft', identifier: account.id})),
-    ...(state.localProfiles || []).map(name => ({id: `local:${name}`, label: name, type: 'Local'}))
-  ];
-  if (!profiles.length) {
-    const empty = document.createElement('p');
-    empty.className = 'muted';
-    empty.textContent = 'Todavía no tienes cuentas guardadas. Añade una cuenta Microsoft o crea un perfil local.';
-    list.append(empty);
+function parseResult(raw) {
+  try {
+    return typeof raw === 'string' ? JSON.parse(raw) : raw;
+  } catch (_error) {
+    return {ok: false, error: 'El launcher devolvió una respuesta no válida.'};
   }
-  for (const profile of profiles) {
-    const card = document.createElement('div');
-    card.className = 'profile-card' + (state.selectedProfile === profile.id ? ' selected' : '');
-    const avatar = document.createElement('span');
-    avatar.className = 'avatar';
-    setAvatar(avatar, state.profileAvatars?.[profile.id], profile.label);
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = 'profile-select';
-    const name = document.createElement('strong');
-    name.textContent = profile.label;
-    const detail = document.createElement('small');
-    detail.textContent = profile.identifier || (profile.type === 'Local' ? 'Perfil sin licencia verificada' : 'Cuenta Microsoft');
-    button.append(name, detail);
-    button.addEventListener('click', () => bridge?.selectProfile(profile.id, applyResult));
-    const remove = document.createElement('button');
-    remove.type = 'button';
-    remove.className = 'profile-remove';
-    remove.textContent = '×';
-    remove.title = `Quitar ${profile.label}`;
-    remove.setAttribute('aria-label', remove.title);
-    remove.addEventListener('click', () => {
-      if (!bridge || !confirm(`¿Quitar ${profile.label} del launcher?`)) return;
-      if (profile.type === 'Microsoft') bridge.removeMicrosoftAccount(profile.id, applyResult);
-      else bridge.removeLocalProfile(profile.label, applyResult);
-    });
-    card.append(avatar, button, remove);
-    list.append(card);
-  }
-}
-
-function applyResult(raw) {
-  const result = typeof raw === 'string' ? JSON.parse(raw) : raw;
-  if (!result.ok) notify(result.error);
-  else setState(result);
 }
 
 function notify(message) {
+  if (!message) return;
   const toast = $('toast');
-  toast.textContent = message;
+  toast.textContent = String(message);
   toast.classList.add('visible');
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => toast.classList.remove('visible'), 5000);
 }
 
+function setAvatar(element, url, name) {
+  if (!element) return;
+  element.textContent = url ? '' : String(name || 'P').charAt(0).toUpperCase();
+  element.style.backgroundImage = url ? 'url("' + String(url).replaceAll('"', '%22') + '")' : '';
+  element.classList.toggle('has-skin', Boolean(url));
+}
+
 function show(page) {
-  for (const id of ['home', 'settings']) $(id).classList.toggle('active', id === page);
-  if (page === 'settings') document.querySelector('.settings-content').scrollTop = 0;
+  if ((page === 'home' || page === 'instances' || page === 'settings') && !currentState?.account) {
+    page = 'auth';
+  }
+  for (const name of pages) {
+    $(name).classList.toggle('active', name === page);
+  }
+  document.body.dataset.page = page;
+  if (page === 'settings') $('settings').querySelector('.settings-content').scrollTop = 0;
+  syncVideo();
+}
+
+function openSettings(fromPage) {
+  if (!currentState?.account) return show('auth');
+  settingsReturnPage = fromPage;
+  tab('accounts');
+  show('settings');
 }
 
 function tab(name) {
-  document.querySelector('.settings-content').scrollTop = 0;
-  document.querySelectorAll('.tab').forEach(el => el.classList.toggle('active', el.dataset.tab === name));
-  document.querySelectorAll('.tab-panel').forEach(el => el.classList.toggle('active', el.id === `${name}-panel`));
+  document.querySelectorAll('.tab').forEach(element => {
+    element.classList.toggle('active', element.dataset.tab === name);
+    element.setAttribute('aria-selected', element.dataset.tab === name ? 'true' : 'false');
+  });
+  document.querySelectorAll('.tab-panel').forEach(element => {
+    element.classList.toggle('active', element.id === name + '-panel');
+  });
+  $('settings').querySelector('.settings-content').scrollTop = 0;
+}
+
+function renderInstances(state) {
+  $('play-instance-name').textContent = state.instanceName || 'Principal';
+  const grid = $('instance-grid');
+  grid.replaceChildren();
+  for (const item of state.instances || []) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'instance-tile ' + item.id + (item.id === state.selectedInstance ? ' selected' : '');
+    button.setAttribute('aria-label', 'Elegir instancia ' + item.name);
+    button.setAttribute('aria-current', item.id === state.selectedInstance ? 'true' : 'false');
+
+    const artwork = document.createElement('span');
+    artwork.className = 'instance-artwork';
+    artwork.setAttribute('aria-hidden', 'true');
+    const badge = document.createElement('span');
+    badge.className = 'instance-badge';
+    badge.textContent = item.installed ? 'INSTALADA' : 'DISPONIBLE';
+    const copy = document.createElement('span');
+    copy.className = 'instance-tile-copy';
+    const title = document.createElement('strong');
+    title.textContent = item.name;
+    const description = document.createElement('small');
+    description.textContent = item.description || '';
+    const meta = document.createElement('span');
+    meta.className = 'instance-meta';
+    meta.textContent = 'Minecraft 1.20.1 · Forge' + (item.modCount ? ' · ' + item.modCount + ' mods' : '');
+    const action = document.createElement('span');
+    action.className = 'instance-action';
+    action.textContent = 'Entrar →';
+    copy.append(title, description, meta, action);
+    button.append(artwork, badge, copy);
+    button.addEventListener('click', () => {
+      if (!bridge || operationRunning) return;
+      bridge.selectInstance(item.id, raw => {
+        const result = parseResult(raw);
+        if (!result?.ok) return notify(result?.error || 'No se pudo elegir la instancia.');
+        setState(result);
+        show('home');
+      });
+    });
+    grid.append(button);
+  }
 }
 
 function renderServer(status) {
-  const text = $('instance-line');
-  const light = $('server-light');
-  const players = $('server-players');
-  const latency = $('server-latency');
-  light.className = 'server-light';
-  text.className = '';
+  const line = $('server-line');
+  const dot = $('server-dot');
+  const ping = $('server-ping');
+  dot.className = 'server-light';
   if (!status?.configured) {
-    text.textContent = 'Servidor próximamente';
-    light.classList.add('pending');
-    text.classList.add('pending');
-    players.textContent = '—';
-    latency.textContent = 'Ping —';
-    $('server-detail').textContent = 'La dirección pública todavía no está disponible. Cuando exista, se podrá configurar para mostrar estado, jugadores y ping reales.';
+    line.textContent = 'Servidor próximamente';
+    ping.textContent = 'Ping —';
+    $('server-detail').textContent = 'La dirección del servidor todavía no está configurada.';
   } else if (!status.online) {
-    text.textContent = 'Apagado';
-    light.classList.add('offline');
-    text.classList.add('offline');
-    players.textContent = '0';
-    latency.textContent = 'Ping —';
-    $('server-detail').textContent = 'El servidor configurado no responde a la consulta de Minecraft.';
+    line.textContent = 'Servidor sin conexión';
+    dot.classList.add('offline');
+    ping.textContent = 'Ping —';
+    $('server-detail').textContent = 'El servidor no responde en este momento.';
   } else {
-    text.textContent = 'En línea';
-    light.classList.add('online');
-    text.classList.add('online');
-    players.textContent = `${status.players ?? 0}/${status.maximum ?? '—'}`;
-    latency.textContent = `Ping ${status.latencyMs} ms`;
-    $('server-detail').textContent = `${status.players ?? 0} jugadores conectados · ping ${status.latencyMs} ms.`;
+    const players = status.players ?? 0;
+    const maximum = status.maximum ?? '—';
+    const latency = status.latencyMs ?? '—';
+    line.textContent = players + '/' + maximum + ' jugadores';
+    dot.classList.add('online');
+    ping.textContent = 'Ping ' + latency + ' ms';
+    $('server-detail').textContent = players + ' jugadores conectados · ping ' + latency + ' ms.';
   }
+}
+
+function renderUpdateStatus(status, state) {
+  const detail = $('launcher-update-detail');
+  if (status?.message) {
+    detail.textContent = status.message;
+  } else if (state.launcherUpdateConfigured) {
+    detail.textContent = 'Versión ' + (state.launcherVersion || '—') + '. Se comprueba al iniciar.';
+  } else {
+    detail.textContent = 'Versión ' + (state.launcherVersion || '—') + '. No hay fuente de actualización configurada.';
+  }
+  const banner = $('update-banner');
+  if (banner) {
+    banner.hidden = status?.status !== 'available';
+    if (!banner.hidden) banner.textContent = 'Versión ' + status.availableVersion + ' disponible. Actualizar launcher →';
+  }
+}
+
+function renderAccount(state) {
+  const account = state.account || 'Jugador';
+  for (const id of ['account-avatar', 'instance-account-avatar', 'settings-avatar']) {
+    setAvatar($(id), state.avatar, account);
+  }
+  $('account-button').setAttribute('aria-label', 'Abrir ajustes de ' + account);
+  $('instance-account-button').setAttribute('aria-label', 'Abrir ajustes de ' + account);
+  $('settings-account-name').textContent = account;
+  $('settings-account-type').textContent = state.accountType === 'local' ? 'Perfil local no premium' : 'Cuenta Microsoft';
+  $('remove-account').disabled = !state.selectedProfile;
+  $('skin-card').hidden = state.accountType !== 'local';
+  $('skin-detail').textContent = state.localSkinSet
+    ? 'Skin local guardada para ' + account + '.'
+    : 'Elige una skin PNG para ' + account + '.';
+}
+
+function renderSettings(state) {
+  $('memory-range').max = String(state.memoryLimitMb || 32768);
+  $('memory-input').max = String(state.memoryLimitMb || 32768);
+  $('memory-range').value = String(state.memoryMb || 8192);
+  $('memory-input').value = String(state.memoryMb || 8192);
+  updateMemoryLabel();
+  $('system-memory-label').textContent = state.systemMemoryMb
+    ? (state.systemMemoryMb / 1024).toFixed(1) + ' GiB'
+    : 'no detectada';
+  $('resolution-enabled').checked = Boolean(state.customResolution);
+  $('resolution-width').value = String(state.resolutionWidth || 854);
+  $('resolution-height').value = String(state.resolutionHeight || 480);
+  updateResolutionControls();
+  $('manifest-source').textContent = state.localManifest
+    ? 'Pack local preparado. Configura su URL HTTPS para distribuirlo.'
+    : state.packConfigured
+      ? 'La instancia seleccionada se verifica y descarga al pulsar Jugar.'
+      : 'Falta la URL HTTPS del pack en launcher-config.json.';
+  renderUpdateStatus(state.launcherUpdateStatus, state);
 }
 
 function setState(raw) {
-  const result = typeof raw === 'string' ? JSON.parse(raw) : raw;
-  if (!result.ok) {
-    notify(result.error);
+  const result = parseResult(raw);
+  if (!result?.ok || !result.state) {
+    notify(result?.error || 'No se pudo leer el estado del launcher.');
     return;
   }
-  const state = result.state;
-  $('account-button').title = state.account ? `Cuenta: ${state.account}` : 'Cuenta de Minecraft';
-  $('account-button').setAttribute('aria-label', $('account-button').title);
-  setAvatar($('account-avatar'), state.avatar, state.account);
-  setAvatar($('skin-avatar'), state.avatar, state.account);
-  $('account-detail').textContent = state.microsoftAccount
-    ? `Cuenta Microsoft conectada: ${state.microsoftAccount}. ${state.accountType === 'local' ? 'Ahora tienes seleccionado un perfil local.' : 'La sesión se actualizará antes de jugar.'}`
-    : 'Inicia sesión con Microsoft para jugar en servidores con autenticación. También puedes crear un perfil local.';
-  renderProfiles(state);
-  $('skin-card').hidden = state.accountType !== 'local';
-  $('skin-detail').textContent = state.localSkinSet
-    ? `Skin local de ${state.account} guardada en este equipo.`
-    : `Elige una skin PNG para ${state.account}.`;
-  $('memory-label').textContent = `${(state.memoryMb / 1024).toFixed(1)} GiB`;
-  $('system-memory-label').textContent = state.systemMemoryMb ? `${(state.systemMemoryMb / 1024).toFixed(1)} GiB` : 'no detectada';
-  $('memory-range').max = String(state.memoryLimitMb);
-  $('memory-input').max = String(state.memoryLimitMb);
-  $('memory-range').value = String(state.memoryMb);
-  $('memory-input').value = String(state.memoryMb);
-  $('resolution-width').value = String(state.resolutionWidth);
-  $('resolution-height').value = String(state.resolutionHeight);
-  $('resolution-status').textContent = state.customResolution
-    ? `Se iniciará a ${state.resolutionWidth} × ${state.resolutionHeight} píxeles.`
-    : 'Se usa la resolución predeterminada.';
-  $('mod-count').textContent = state.modCount || '—';
-  $('discord-detail').textContent = state.discordConfigured
-    ? 'Discord mostrará Planeta Panetones Launcher cuando su aplicación de escritorio esté abierta.'
-    : 'Falta el Application ID de Discord. El estado se activará cuando se configure.';
-  renderServer(state.serverStatus);
-  $('manifest-source').textContent = state.localManifest
-    ? 'Pack local preparado. Cuando tengas hosting, coloca su URL HTTPS en launcher-config.json.'
-    : state.packConfigured
-      ? 'El launcher descarga y verifica los archivos desde tu hosting antes de iniciar Minecraft.'
-      : 'Falta la URL HTTPS del pack en launcher-config.json.';
+  const hadAccount = Boolean(currentState?.account);
+  const firstState = !routeInitialized;
+  currentState = result.state;
+  renderInstances(currentState);
+  renderAccount(currentState);
+  renderSettings(currentState);
+  renderServer(currentState.serverStatus);
+  $('play-button').disabled = operationRunning || !currentState.account || !currentState.packConfigured;
+  if (firstState) {
+    routeInitialized = true;
+    show(currentState.account ? 'instances' : 'auth');
+  } else if (!hadAccount && currentState.account) {
+    show('instances');
+  } else if (hadAccount && !currentState.account) {
+    show('auth');
+  }
 }
 
 function setBusy(busy) {
-  operationRunning = busy;
-  document.querySelector('.bottom-bar').classList.toggle('busy', busy);
-  $('play-button').disabled = busy;
-  $('login-button').disabled = busy;
-  $('update-button').disabled = busy;
-  if (!busy) $('download-status').classList.remove('visible');
+  operationRunning = Boolean(busy);
+  document.body.classList.toggle('is-launching', operationRunning && activeOperation === 'play');
+  for (const id of ['play-button', 'auth-login', 'auth-local', 'create-local', 'update-button', 'settings-save']) {
+    const element = $(id);
+    if (element) element.disabled = operationRunning || (id === 'play-button' && (!currentState?.account || !currentState?.packConfigured));
+  }
+  document.querySelectorAll('.instance-tile').forEach(element => { element.disabled = operationRunning; });
+  $('play-button').textContent = operationRunning && activeOperation === 'play' ? 'Preparando…' : 'Jugar';
+  if (!operationRunning) {
+    activeOperation = null;
+    $('download-status').classList.remove('visible', 'login');
+    $('cancel-login').hidden = true;
+    $('cancel-login').disabled = false;
+  }
+  syncVideo();
 }
 
-function handleEvent(raw) {
-  const event = JSON.parse(raw);
-  if (event.type === 'status') {
-    $('download-status').classList.add('visible');
-    $('download-text').textContent = event.text;
-  } else if (event.type === 'progress') {
-    $('download-progress').max = Math.max(event.max || 1, 1);
-    $('download-progress').value = event.value || 0;
-  } else if (event.type === 'error') {
-    notify(event.text);
-    setBusy(false);
-  } else if (event.type === 'done') {
-    notify(event.action === 'play' ? 'Minecraft está iniciando.' : 'Operación completada.');
-    setBusy(false);
-  } else if (event.type === 'state') {
-    setState({ok: true, state: event.state});
-  } else if (event.type === 'server') {
-    renderServer(event.status);
-  }
+function openProgress(method) {
+  activeOperation = method;
+  const login = method === 'login';
+  $('download-title').textContent = login
+    ? 'Conectando con Microsoft'
+    : method === 'play' ? (currentState?.instanceName || 'Instancia') : 'Verificando instancia';
+  $('download-text').textContent = login ? 'Abriendo Microsoft…' : 'Preparando archivos…';
+  $('download-progress').max = 100;
+  $('download-progress').value = 0;
+  $('download-percent').textContent = '0%';
+  $('download-status').classList.add('visible');
+  $('download-status').classList.toggle('login', login);
+  $('cancel-login').hidden = !login;
+  setBusy(true);
 }
 
 function start(method) {
-  if (!bridge || operationRunning) return;
+  if (!bridge) return notify('Abre el launcher de escritorio para continuar.');
+  if (operationRunning) return;
+  if (method === 'play' && !currentState?.account) return show('auth');
+  openProgress(method);
   bridge[method](raw => {
-    const result = JSON.parse(raw);
-    if (!result.ok) notify(result.error);
-    else {
-      setBusy(true);
-      $('download-text').textContent = 'Preparando…';
-      $('download-progress').value = 0;
-      $('download-status').classList.add('visible');
-    }
+    const result = parseResult(raw);
+    if (result?.ok) return;
+    notify(result?.error || 'No se pudo iniciar la operación.');
+    setBusy(false);
   });
 }
 
-document.querySelectorAll('.tab').forEach(el => el.addEventListener('click', () => tab(el.dataset.tab)));
-$('settings-button').addEventListener('click', () => show('settings'));
-$('account-button').addEventListener('click', () => { show('settings'); tab('accounts'); });
-$('back-button').addEventListener('click', () => show('home'));
-$('play-button').addEventListener('click', () => start('play'));
-$('login-button').addEventListener('click', () => start('login'));
-$('create-local').addEventListener('click', () => {
-  if (!bridge) return;
-  bridge.createLocalProfile($('local-name').value, raw => {
-    applyResult(raw);
-    if (JSON.parse(raw).ok) $('local-name').value = '';
-  });
-});
-$('local-name').addEventListener('keydown', event => { if (event.key === 'Enter') $('create-local').click(); });
-$('choose-skin').addEventListener('click', () => bridge?.chooseLocalSkin(applyResult));
-$('memory-range').addEventListener('input', () => { $('memory-input').value = $('memory-range').value; });
-$('memory-input').addEventListener('input', () => {
-  const value = Number($('memory-input').value);
-  if (Number.isFinite(value)) $('memory-range').value = String(value);
-});
-$('save-memory').addEventListener('click', () => {
-  if (!bridge) return;
-  const value = Number($('memory-input').value);
-  if (!Number.isInteger(value)) return notify('Escribe una cantidad de RAM válida en MiB.');
-  bridge.saveMemory(value, raw => {
-    applyResult(raw);
-    if (JSON.parse(raw).ok) notify('RAM guardada para el próximo inicio de Minecraft.');
-  });
-});
-$('save-resolution').addEventListener('click', () => {
-  if (!bridge) return;
+function handleEvent(raw) {
+  const event = parseResult(raw);
+  if (!event || typeof event !== 'object') return;
+  switch (event.type) {
+    case 'status':
+      $('download-text').textContent = event.text || 'Preparando…';
+      if (operationRunning) $('download-status').classList.add('visible');
+      break;
+    case 'progress': {
+      const max = Math.max(Number(event.max) || 1, 1);
+      const value = Math.max(0, Math.min(Number(event.value) || 0, max));
+      $('download-progress').max = max;
+      $('download-progress').value = value;
+      $('download-percent').textContent = Math.round(100 * value / max) + '%';
+      break;
+    }
+    case 'error':
+      notify(event.text || 'No se pudo completar la operación.');
+      setBusy(false);
+      break;
+    case 'cancelled':
+      setBusy(false);
+      break;
+    case 'done':
+      if (event.action === 'play') notify('Minecraft está iniciando.');
+      else if (event.action === 'update') notify('Instancia verificada y lista para jugar.');
+      setBusy(false);
+      break;
+    case 'busy':
+      if (event.busy && !operationRunning) openProgress('update');
+      else if (!event.busy) setBusy(false);
+      break;
+    case 'state':
+      setState({ok: true, state: event.state});
+      break;
+    case 'server':
+      renderServer(event.status);
+      break;
+    case 'launcher_update_status':
+      if (currentState) {
+        currentState.launcherUpdateStatus = event;
+        renderUpdateStatus(event, currentState);
+      }
+      break;
+    case 'update_notice':
+      notify(event.text);
+      break;
+    default:
+      break;
+  }
+}
+
+function applyResult(raw) {
+  const result = parseResult(raw);
+  if (!result?.ok) return notify(result?.error || 'No se pudo completar la operación.');
+  if (result.state) setState(result);
+}
+
+function updateMemoryLabel() {
+  const memory = Number($('memory-input').value) || 0;
+  $('memory-label').textContent = (memory / 1024).toFixed(1) + ' GiB';
+}
+
+function updateResolutionControls() {
+  const enabled = $('resolution-enabled').checked;
+  $('resolution-width').disabled = !enabled;
+  $('resolution-height').disabled = !enabled;
+}
+
+function saveSettings() {
+  if (!bridge || operationRunning) return;
+  const memory = Number($('memory-input').value);
   const width = Number($('resolution-width').value);
   const height = Number($('resolution-height').value);
-  if (!Number.isInteger(width) || !Number.isInteger(height)) return notify('Escribe un ancho y alto válidos.');
-  bridge.saveResolution(width, height, raw => {
-    applyResult(raw);
-    if (JSON.parse(raw).ok) notify('Resolución guardada para el próximo inicio de Minecraft.');
+  const limit = Number(currentState?.memoryLimitMb) || 32768;
+  if (!Number.isInteger(memory) || memory < 2048 || memory > limit) {
+    return notify('Elige entre 2048 y ' + limit + ' MiB de RAM.');
+  }
+  if (!Number.isInteger(width) || !Number.isInteger(height) ||
+      width < 640 || width > 7680 || height < 360 || height > 4320) {
+    return notify('Elige una resolución entre 640×360 y 7680×4320.');
+  }
+  const resolution = $('resolution-enabled').checked;
+  $('settings-save').disabled = true;
+  bridge.saveSettings(memory, width, height, resolution, raw => {
+    $('settings-save').disabled = false;
+    const result = parseResult(raw);
+    if (!result?.ok) return notify(result?.error || 'No se pudieron guardar los ajustes.');
+    localStorage.setItem('playVideo', String(videoToggle.checked));
+    setState(result);
+    show(settingsReturnPage);
+    syncVideo();
+    notify('Ajustes guardados.');
   });
-});
-$('reset-resolution').addEventListener('click', () => bridge?.resetResolution(raw => {
-  applyResult(raw);
-  if (JSON.parse(raw).ok) notify('Resolución predeterminada restaurada.');
-}));
-$('update-button').addEventListener('click', () => start('update'));
-$('open-folder').addEventListener('click', () => {
-  if (bridge) bridge.openFolder(raw => {
-    const result = JSON.parse(raw);
-    if (!result.ok) notify(result.error);
-  });
-});
-$('open-mods-folder').addEventListener('click', () => {
-  if (bridge) bridge.openModsFolder(raw => {
-    const result = JSON.parse(raw);
-    if (!result.ok) notify(result.error);
-  });
-});
+}
 
-const video = $('background-video');
-const videoToggle = $('video-toggle');
-videoToggle.checked = localStorage.getItem('playVideo') !== 'false';
-if (!videoToggle.checked) video.pause();
-videoToggle.addEventListener('change', () => {
-  localStorage.setItem('playVideo', String(videoToggle.checked));
-  if (videoToggle.checked) video.play().catch(() => {});
-  else video.pause();
+function syncVideo() {
+  const shouldPlay = videoToggle.checked && !document.hidden &&
+    $('home').classList.contains('active') && !operationRunning;
+  if (!shouldPlay) {
+    video.pause();
+    return;
+  }
+  if (!videoSourceLoaded) {
+    video.src = 'assets/fondo.mp4';
+    videoSourceLoaded = true;
+  }
+  video.play().catch(() => {});
+}
+
+document.querySelectorAll('.tab').forEach(element =>
+  element.addEventListener('click', () => tab(element.dataset.tab))
+);
+$('auth-login').addEventListener('click', () => start('login'));
+$('auth-local').addEventListener('click', () => {
+  $('auth-local-form').hidden = false;
+  $('local-name').focus();
 });
+$('create-local').addEventListener('click', () => {
+  if (!bridge || operationRunning) return notify('Abre el launcher de escritorio para continuar.');
+  const name = $('local-name').value.trim();
+  bridge.createLocalProfile(name, raw => {
+    const result = parseResult(raw);
+    if (!result?.ok) return notify(result?.error || 'No se pudo crear el perfil local.');
+    $('local-name').value = '';
+    $('auth-local-form').hidden = true;
+    setState(result);
+  });
+});
+$('local-name').addEventListener('keydown', event => {
+  if (event.key === 'Enter') $('create-local').click();
+});
+$('cancel-login').addEventListener('click', () => {
+  if (!bridge || activeOperation !== 'login' || !operationRunning) return;
+  $('cancel-login').disabled = true;
+  $('download-text').textContent = 'Cancelando inicio de sesión…';
+  bridge.cancelLogin(raw => {
+    const result = parseResult(raw);
+    if (!result?.ok) {
+      notify(result?.error || 'No se pudo cancelar el inicio de sesión.');
+      setBusy(false);
+    }
+  });
+});
+$('instance-account-button').addEventListener('click', () => openSettings('instances'));
+$('account-button').addEventListener('click', () => openSettings('home'));
+$('instances-home').addEventListener('click', () => show('instances'));
+$('play-button').addEventListener('click', () => start('play'));
+$('settings-save').addEventListener('click', saveSettings);
+$('remove-account').addEventListener('click', () => {
+  if (!bridge || !currentState?.selectedProfile || operationRunning) return;
+  if (!confirm('¿Quitar esta cuenta del launcher?')) return;
+  const selected = currentState.selectedProfile;
+  if (selected.startsWith('microsoft:')) {
+    bridge.removeMicrosoftAccount(selected, applyResult);
+  } else if (selected.startsWith('local:')) {
+    bridge.removeLocalProfile(selected.slice(6), applyResult);
+  }
+});
+$('choose-skin').addEventListener('click', () => bridge?.chooseLocalSkin(applyResult));
+$('memory-range').addEventListener('input', () => {
+  $('memory-input').value = $('memory-range').value;
+  updateMemoryLabel();
+});
+$('memory-input').addEventListener('input', () => {
+  $('memory-range').value = $('memory-input').value;
+  updateMemoryLabel();
+});
+$('resolution-enabled').addEventListener('change', updateResolutionControls);
+videoToggle.checked = localStorage.getItem('playVideo') !== 'false';
+videoToggle.addEventListener('change', syncVideo);
+$('update-button').addEventListener('click', () => start('update'));
+for (const [id, method] of [['open-folder', 'openFolder'], ['open-mods-folder', 'openModsFolder']]) {
+  $(id).addEventListener('click', () => bridge?.[method](raw => {
+    const result = parseResult(raw);
+    if (!result?.ok) notify(result?.error || 'No se pudo abrir la carpeta.');
+  }));
+}
+const updateBanner = $('update-banner');
+if (updateBanner) {
+  updateBanner.addEventListener('click', () => bridge?.installLauncherUpdate(raw => {
+    const result = parseResult(raw);
+    if (!result?.ok) notify(result?.error || 'No se pudo iniciar la actualización.');
+  }));
+}
+document.addEventListener('visibilitychange', syncVideo);
+document.addEventListener('keydown', event => {
+  if (event.key !== 'Escape') return;
+  if (activeOperation === 'login' && operationRunning) {
+    $('cancel-login').click();
+  } else if (!operationRunning && $('home').classList.contains('active')) {
+    show('instances');
+  }
+});
+syncVideo();
 
 if (typeof QWebChannel !== 'undefined' && typeof qt !== 'undefined') {
   new QWebChannel(qt.webChannelTransport, channel => {
@@ -269,6 +462,6 @@ if (typeof QWebChannel !== 'undefined' && typeof qt !== 'undefined') {
     bridge.getState(setState);
   });
 } else {
-  $('instance-line').textContent = 'Abre esta interfaz desde la aplicación de escritorio.';
   renderServer({configured: false});
+  renderUpdateStatus({status: 'unconfigured', message: 'Abre el launcher de escritorio para jugar.'}, {});
 }

@@ -5,6 +5,7 @@ import hashlib
 import os
 import ctypes
 import re
+import shutil
 import subprocess
 import sys
 import threading
@@ -21,14 +22,19 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QImage, QPainter
 
 from updater import sync_pack
+from version import VERSION
 
 
-APP_DIR = Path(__file__).resolve().parent
+APP_DIR = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent))
 CONFIG_FILE = APP_DIR / "launcher-config.json"
 MINECRAFT_VERSION = "1.20.1"
 FORGE_VERSION = "47.4.20"
 FORGE_ID = f"{MINECRAFT_VERSION}-forge-{FORGE_VERSION}"
 NAME_PATTERN = re.compile(r"[A-Za-z0-9_]{3,16}\Z")
+
+
+class LoginCancelled(Exception):
+    """The user cancelled the browser-based Microsoft sign-in."""
 
 
 def data_dir() -> Path:
@@ -56,9 +62,48 @@ def read_config() -> dict:
     except (TypeError, ValueError):
         requested_memory = 8192
     config["memory_mb"] = max(2048, min(requested_memory, memory_limit_mb()))
-    if not config.get("manifest_url") and (APP_DIR / "publicar/manifest.json").is_file():
+    if not getattr(sys, "frozen", False) and not config.get("manifest_url") and (APP_DIR / "publicar/manifest.json").is_file():
         config["manifest_url"] = (APP_DIR / "publicar/manifest.json").as_uri()
+    if not config.get("optimized_manifest_url"):
+        optimized = APP_DIR / "publicar/optimizado/manifest.json"
+        if str(config.get("manifest_url", "")).startswith("https://"):
+            config["optimized_manifest_url"] = urllib.parse.urljoin(config["manifest_url"], "optimizado/manifest.json")
+        elif not getattr(sys, "frozen", False) and optimized.is_file():
+            config["optimized_manifest_url"] = optimized.as_uri()
+    if not config.get("launcher_update_url") and str(config.get("manifest_url", "")).startswith("https://"):
+        config["launcher_update_url"] = urllib.parse.urljoin(config["manifest_url"], "launcher-update.json")
     return config
+
+
+INSTANCE_NAMES = {"principal": "Principal", "optimizada": "Optimizada"}
+
+
+def selected_instance_id() -> str:
+    try:
+        saved = json.loads((data_dir() / "preferences.json").read_text(encoding="utf-8"))
+        instance_id = saved.get("instance", "principal")
+        return instance_id if instance_id in INSTANCE_NAMES else "principal"
+    except (OSError, ValueError, TypeError, AttributeError):
+        return "principal"
+
+
+def set_instance(instance_id: str) -> None:
+    if instance_id not in INSTANCE_NAMES:
+        raise ValueError("No se encontró esa instancia.")
+    _save_preferences(instance=instance_id)
+
+
+def instance_game_dir(instance_id: str | None = None) -> Path:
+    choice = instance_id or selected_instance_id()
+    if choice not in INSTANCE_NAMES:
+        raise ValueError("Instancia no válida.")
+    return data_dir() / ("minecraft" if choice == "principal" else "instances/optimizada")
+
+
+def instance_manifest_url(config: dict, instance_id: str) -> str:
+    if instance_id not in INSTANCE_NAMES:
+        raise ValueError("Instancia no válida.")
+    return str(config.get("manifest_url" if instance_id == "principal" else "optimized_manifest_url", "")).strip()
 
 
 def system_memory_mb() -> int:
@@ -122,6 +167,19 @@ def reset_resolution() -> None:
     _save_preferences(resolution_width=854, resolution_height=480, custom_resolution=False)
 
 
+def save_global_settings(memory_mb: int, width: int, height: int, custom_resolution: bool) -> None:
+    """Validate and save settings shared by every instance in one file replacement."""
+    if isinstance(memory_mb, bool) or not isinstance(memory_mb, int) or not 2048 <= memory_mb <= memory_limit_mb():
+        raise ValueError(f"Elige entre 2048 y {memory_limit_mb()} MiB de RAM.")
+    if isinstance(width, bool) or not isinstance(width, int) or not 640 <= width <= 7680 \
+            or isinstance(height, bool) or not isinstance(height, int) or not 360 <= height <= 4320:
+        raise ValueError("La resolución debe estar entre 640×360 y 7680×4320.")
+    if not isinstance(custom_resolution, bool):
+        raise ValueError("Elige si quieres usar una resolución personalizada.")
+    _save_preferences(memory_mb=memory_mb, resolution_width=width, resolution_height=height,
+                      custom_resolution=custom_resolution)
+
+
 def _account_path() -> Path:
     return data_dir() / "account.json"
 
@@ -160,12 +218,51 @@ def _microsoft_avatar_path(identifier: str) -> Path:
     return data_dir() / "avatars" / f"microsoft-{digest}.png"
 
 
-def selected_microsoft_account() -> dict | None:
+def _identity_path() -> Path:
+    return data_dir() / "identity.json"
+
+
+def _save_identity(identifier: str | None) -> None:
+    path = _identity_path()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_suffix(".json.part")
+    temporary.write_text(json.dumps({"selected": identifier}, ensure_ascii=False) + "\n", encoding="utf-8")
+    temporary.replace(path)
+
+
+def _active_identifier() -> str | None:
+    """Migrate the selected legacy profile once; never reactivate extras after removal."""
+    path = _identity_path()
+    if path.exists():
+        try:
+            identifier = json.loads(path.read_text(encoding="utf-8")).get("selected")
+            return identifier if isinstance(identifier, str) and identifier else None
+        except (OSError, ValueError, TypeError, AttributeError):
+            return None
+    profiles = _read_profiles()
     accounts = _read_accounts()
-    selection = _read_profiles().get("selected", "microsoft")
-    if selection.startswith("microsoft:"):
-        return next((account for account in accounts if "microsoft:" + account["id"] == selection), None)
-    return accounts[0] if accounts else None
+    selection = profiles.get("selected")
+    identifiers = {"microsoft:" + account["id"] for account in accounts}
+    identifiers.update("local:" + item["name"] for item in profiles["local"] if isinstance(item, dict) and item.get("name"))
+    if selection == "microsoft" and accounts:
+        selected = "microsoft:" + accounts[0]["id"]
+    elif selection in identifiers:
+        selected = selection
+    elif accounts:
+        selected = "microsoft:" + accounts[0]["id"]
+    elif profiles["local"]:
+        selected = "local:" + profiles["local"][0]["name"]
+    else:
+        selected = None
+    _save_identity(selected)
+    return selected
+
+
+def selected_microsoft_account() -> dict | None:
+    selection = _active_identifier()
+    if not selection or not selection.startswith("microsoft:"):
+        return None
+    return next((account for account in _read_accounts() if "microsoft:" + account["id"] == selection), None)
 
 
 def _profiles_path() -> Path:
@@ -194,6 +291,9 @@ def create_local_profile(name: str) -> None:
     name = name.strip()
     if not NAME_PATTERN.fullmatch(name):
         raise ValueError("El nombre debe tener entre 3 y 16 caracteres: letras, números o guion bajo.")
+    active = _active_identifier()
+    if active and active.lower() != ("local:" + name).lower():
+        raise ValueError("Ya hay una cuenta guardada. Quítala en Ajustes antes de añadir otra.")
     data = _read_profiles()
     existing = next((item["name"] for item in data["local"] if item["name"].lower() == name.lower()), None)
     if existing:
@@ -202,12 +302,15 @@ def create_local_profile(name: str) -> None:
         data["local"].append({"name": name})
     data["selected"] = "local:" + name
     _save_profiles(data)
+    _save_identity("local:" + name)
 
 
 def select_profile(identifier: str) -> None:
+    if identifier != _active_identifier():
+        raise ValueError("Solo se permite una cuenta. Quítala en Ajustes antes de añadir otra.")
     data = _read_profiles()
     valid_local = any("local:" + item["name"] == identifier for item in data["local"])
-    valid_microsoft = identifier == "microsoft" or any("microsoft:" + item["id"] == identifier for item in _read_accounts())
+    valid_microsoft = any("microsoft:" + item["id"] == identifier for item in _read_accounts())
     if not valid_local and not valid_microsoft:
         raise ValueError("No se encontró esa cuenta.")
     data["selected"] = identifier
@@ -215,20 +318,22 @@ def select_profile(identifier: str) -> None:
 
 
 def remove_local_profile(name: str) -> None:
+    if _active_identifier() != "local:" + name:
+        raise ValueError("No se encontró ese perfil local activo.")
     data = _read_profiles()
     remaining = [item for item in data["local"] if item["name"] != name]
     if len(remaining) == len(data["local"]):
         raise ValueError("No se encontró ese perfil local.")
     data["local"] = remaining
-    if data.get("selected") == "local:" + name:
-        data["selected"] = "microsoft" if account_name() else ("local:" + remaining[0]["name"] if remaining else "microsoft")
+    data["selected"] = None
     _save_profiles(data)
+    _save_identity(None)
 
 
 def selected_profile() -> dict:
     data = _read_profiles()
-    selection = data.get("selected", "microsoft")
-    if selection.startswith("local:"):
+    selection = _active_identifier()
+    if selection and selection.startswith("local:"):
         name = selection[6:]
         if any(item["name"] == name for item in data["local"]):
             raw = hashlib.md5(("OfflinePlayer:" + name).encode("utf-8")).digest()
@@ -237,7 +342,7 @@ def selected_profile() -> dict:
             value[8] = value[8] & 0x3f | 0x80
             return {"type": "local", "name": name, "id": str(uuid.UUID(bytes=bytes(value))), "access_token": "0"}
     account = selected_microsoft_account()
-    return {"type": "microsoft", "name": account["name"] if account else None,
+    return {"type": "microsoft" if account else "none", "name": account["name"] if account else None,
             "id": account["id"] if account else None}
 
 
@@ -282,10 +387,13 @@ def save_microsoft_avatar(account: dict) -> None:
         return
     url = skins[0].get("url", "")
     parsed = urllib.parse.urlparse(url)
-    if parsed.scheme != "https" or parsed.hostname != "textures.minecraft.net":
+    if parsed.scheme not in {"http", "https"} or parsed.hostname != "textures.minecraft.net":
         return
+    # Minecraft's profile API can return an http://textures.minecraft.net URL.
+    # Fetch the same texture over HTTPS without using the untrusted URL's host.
+    secure_url = urllib.parse.urlunparse(("https", "textures.minecraft.net", parsed.path, "", "", ""))
     try:
-        with urllib.request.urlopen(url, timeout=12) as response:
+        with urllib.request.urlopen(secure_url, timeout=12) as response:
             content = response.read(1024 * 1024 + 1)
         if len(content) > 1024 * 1024:
             return
@@ -307,6 +415,8 @@ def account_id() -> str | None:
 
 
 def remove_microsoft_account(identifier: str) -> None:
+    if _active_identifier() != identifier:
+        raise ValueError("No se encontró esa cuenta Microsoft activa.")
     accounts = _read_accounts()
     remaining = [account for account in accounts if "microsoft:" + account["id"] != identifier]
     if len(remaining) == len(accounts):
@@ -317,15 +427,18 @@ def remove_microsoft_account(identifier: str) -> None:
         (data_dir() / "avatars/microsoft.png").unlink(missing_ok=True)
     _save_accounts(remaining)
     profiles = _read_profiles()
-    if profiles.get("selected") == identifier or (profiles.get("selected") == "microsoft" and not remaining):
-        profiles["selected"] = ("microsoft:" + remaining[0]["id"] if remaining else
-                                "local:" + profiles["local"][0]["name"] if profiles["local"] else "microsoft")
-        _save_profiles(profiles)
+    profiles["selected"] = None
+    _save_profiles(profiles)
+    _save_identity(None)
 
 
 def save_account(account: dict) -> None:
     if not account.get("id") or not account.get("name"):
         raise ValueError("La cuenta Microsoft no tiene un perfil de Minecraft válido.")
+    identifier = "microsoft:" + account["id"]
+    active = _active_identifier()
+    if active and active != identifier:
+        raise ValueError("Ya hay una cuenta guardada. Quítala en Ajustes antes de añadir otra.")
     accounts = _read_accounts()
     if _account_path().is_file() and accounts:
         legacy_avatar = data_dir() / "avatars/microsoft.png"
@@ -336,9 +449,15 @@ def save_account(account: dict) -> None:
     accounts = [item for item in accounts if item["id"] != account["id"]]
     accounts.append(account)
     _save_accounts(accounts)
+    _save_identity(identifier)
+    profiles = _read_profiles()
+    profiles["selected"] = identifier
+    _save_profiles(profiles)
 
 
-def microsoft_login(status) -> dict:
+def microsoft_login(status, cancel_event: threading.Event | None = None) -> dict:
+    if (_active_identifier() or "").startswith("local:"):
+        raise ValueError("Ya hay un perfil local. Quítalo en Ajustes antes de iniciar sesión con Microsoft.")
     config = read_config()
     client_id = config.get("microsoft_client_id", "").strip()
     if not client_id:
@@ -367,15 +486,20 @@ def microsoft_login(status) -> dict:
             pass
 
     server = HTTPServer(("127.0.0.1", parsed.port), Handler)
-    server.timeout = 1
+    server.timeout = 0.25
     server.callback_url = None
     try:
         status("Abriendo Microsoft para iniciar sesión…")
         if not webbrowser.open(login_url):
             raise RuntimeError("No se pudo abrir el navegador para iniciar sesión.")
-        deadline = time.monotonic() + 180
+        status("Esperando el inicio de sesión en Microsoft… Si cerraste la página, pulsa Cancelar.")
+        deadline = time.monotonic() + 120
         while not server.callback_url and time.monotonic() < deadline:
+            if cancel_event is not None and cancel_event.is_set():
+                raise LoginCancelled()
             server.handle_request()
+        if cancel_event is not None and cancel_event.is_set():
+            raise LoginCancelled()
         if not server.callback_url:
             raise TimeoutError("Se agotó el tiempo de inicio de sesión.")
         auth_code = mll.microsoft_account.parse_auth_code_url(server.callback_url, state)
@@ -388,6 +512,8 @@ def microsoft_login(status) -> dict:
         raise RuntimeError(
             "Minecraft aún no autoriza esta aplicación. El Client ID de Planeta Panetones necesita permiso para la API de Minecraft."
         ) from exc
+    if cancel_event is not None and cancel_event.is_set():
+        raise LoginCancelled()
     save_account(account)
     save_microsoft_avatar(account)
     select_profile("microsoft:" + account["id"])
@@ -401,7 +527,7 @@ def refreshed_account(status) -> dict:
         raise RuntimeError("Falta el Client ID de Microsoft en launcher-config.json.")
     old = selected_microsoft_account()
     if old is None:
-        return microsoft_login(status)
+        raise ValueError("Inicia sesión con Microsoft antes de jugar.")
     status("Actualizando la sesión de Minecraft…")
     try:
         account = mll.microsoft_account.complete_refresh(
@@ -458,19 +584,42 @@ def install_game(status, progress) -> tuple[Path, str]:
     return game, java
 
 
-def update_pack(status, progress) -> dict:
-    manifest_url = read_config().get("manifest_url", "").strip()
+def update_pack(status, progress, *, verify_all: bool = False, instance_id: str | None = None) -> dict:
+    choice = instance_id or selected_instance_id()
+    manifest_url = instance_manifest_url(read_config(), choice)
     if not manifest_url:
-        raise RuntimeError("Falta la URL HTTPS del pack en launcher-config.json.")
-    status("Buscando actualizaciones de Planeta Panetones…")
+        raise RuntimeError(f"Falta el manifiesto de la instancia {INSTANCE_NAMES[choice]}.")
+    status(f"Buscando actualizaciones de {INSTANCE_NAMES[choice]}…")
+    last_report = 0.0
+
+    def report(name: str, index: int, total: int) -> None:
+        nonlocal last_report
+        now = time.monotonic()
+        if name.startswith("Descargando:") or index == total or now - last_report >= 0.1:
+            status(name)
+            progress(index, total)
+            last_report = now
+
     return sync_pack(
         manifest_url,
-        data_dir() / "minecraft",
-        lambda name, index, total: (status(name), progress(index, total)),
+        instance_game_dir(choice),
+        report,
+        verify_all=verify_all,
+        expected_edition=choice,
     )
 
 
-def launch_game(account: dict, game: Path, java: str) -> None:
+def launch_game(account: dict, game: Path, java: str, instance_id: str | None = None) -> None:
+    instance_dir = instance_game_dir(instance_id)
+    instance_dir.mkdir(parents=True, exist_ok=True)
+    if instance_dir != game and (game / "servers.dat").is_file() and not (instance_dir / "servers.dat").exists():
+        shutil.copy2(game / "servers.dat", instance_dir / "servers.dat")
+    if account.get("type") == "local" and instance_dir != game:
+        source = game / "CustomSkinLoader/LocalSkin/skins" / f"{account['name']}.png"
+        if source.is_file():
+            destination = instance_dir / "CustomSkinLoader/LocalSkin/skins" / source.name
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(source, destination)
     config = read_config()
     memory_mb = int(config.get("memory_mb", 8192))
     if not 2048 <= memory_mb <= memory_limit_mb():
@@ -480,10 +629,10 @@ def launch_game(account: dict, game: Path, java: str) -> None:
         "uuid": account["id"],
         "token": account["access_token"],
         "executablePath": java,
-        "gameDirectory": str(game),
+        "gameDirectory": str(instance_dir),
         "jvmArguments": [f"-Xmx{memory_mb}m"],
         "launcherName": "PlanetaPanetones",
-        "launcherVersion": "1.0.0",
+        "launcherVersion": VERSION,
     }
     if config.get("custom_resolution", False):
         width, height = int(config.get("resolution_width", 854)), int(config.get("resolution_height", 480))
@@ -491,43 +640,59 @@ def launch_game(account: dict, game: Path, java: str) -> None:
             raise ValueError("La resolución guardada no es válida.")
         options.update(customResolution=True, resolutionWidth=str(width), resolutionHeight=str(height))
     command = mll.command.get_minecraft_command(FORGE_ID, game, options)
-    subprocess.Popen(command, cwd=game, start_new_session=True)
+    subprocess.Popen(command, cwd=instance_dir, start_new_session=True)
 
 
 def game_state() -> dict:
     config = read_config()
-    local = (data_dir() / "minecraft/.planeta-panetones-manifest.json").is_file()
-    manifest = data_dir() / "minecraft/.planeta-panetones-manifest.json"
-    if not manifest.is_file() and config.get("manifest_url", "").startswith("file:"):
-        manifest = APP_DIR / "publicar/manifest.json"
+    instance_id = selected_instance_id()
+    game_dir = instance_game_dir(instance_id)
+    manifest_url = instance_manifest_url(config, instance_id)
+    local = (game_dir / ".planeta-panetones-manifest.json").is_file()
+    manifest = game_dir / ".planeta-panetones-manifest.json"
+    if not manifest.is_file() and manifest_url.startswith("file:"):
+        manifest = APP_DIR / ("publicar/manifest.json" if instance_id == "principal" else "publicar/optimizado/manifest.json")
     try:
         mod_count = sum(entry["path"].startswith("mods/") for entry in json.loads(manifest.read_text(encoding="utf-8"))["files"])
     except (OSError, ValueError, KeyError, TypeError):
         mod_count = 0
-    profiles = _read_profiles()
     selected = selected_profile()
-    accounts = _read_accounts()
-    selected_identifier = profiles.get("selected", "microsoft")
-    if selected_identifier == "microsoft" and selected.get("id"):
-        selected_identifier = "microsoft:" + selected["id"]
+    selected_identifier = _active_identifier()
+    account = selected_microsoft_account()
     profile_avatars = {}
-    for account in accounts:
+    if account:
         path = _microsoft_avatar_path(account["id"])
-        if not path.is_file() and len(accounts) == 1:
+        if not path.is_file():
             path = data_dir() / "avatars/microsoft.png"
         if path.is_file():
             profile_avatars["microsoft:" + account["id"]] = path.as_uri() + f"?v={path.stat().st_mtime_ns}"
-    for item in profiles["local"]:
-        identifier = "local:" + item["name"]
-        path = data_dir() / "avatars" / f"local-{item['name']}.png"
+    if selected["type"] == "local":
+        path = data_dir() / "avatars" / f"local-{selected['name']}.png"
         if path.is_file():
-            profile_avatars[identifier] = path.as_uri() + f"?v={path.stat().st_mtime_ns}"
+            profile_avatars[selected_identifier] = path.as_uri() + f"?v={path.stat().st_mtime_ns}"
+    def instance_mod_count(key: str) -> int:
+        lock = instance_game_dir(key) / ".planeta-panetones-manifest.json"
+        if not lock.is_file():
+            lock = APP_DIR / ("publicar/manifest.json" if key == "principal" else "publicar/optimizado/manifest.json")
+        try:
+            return sum(entry["path"].startswith("mods/") for entry in json.loads(lock.read_text(encoding="utf-8"))["files"])
+        except (OSError, ValueError, KeyError, TypeError):
+            return 0
+
     return {
+        "selectedInstance": instance_id,
+        "instanceName": INSTANCE_NAMES[instance_id],
+        "instances": [{"id": key, "name": name, "installed":
+                       (instance_game_dir(key) / ".planeta-panetones-manifest.json").is_file(),
+                       "modCount": instance_mod_count(key), "description":
+                       "Contenido completo y efectos visuales" if key == "principal" else
+                       "Contenido esencial y mejor rendimiento"}
+                      for key, name in INSTANCE_NAMES.items()],
         "account": selected["name"],
         "accountType": selected["type"],
         "selectedProfile": selected_identifier,
-        "localProfiles": [item["name"] for item in profiles["local"]],
-        "microsoftAccounts": [{"id": item["id"], "name": item["name"]} for item in accounts],
+        "localProfiles": [selected["name"]] if selected["type"] == "local" else [],
+        "microsoftAccounts": [{"id": account["id"], "name": account["name"]}] if account else [],
         "microsoftAccount": account_name(),
         "microsoftId": account_id(),
         "avatar": profile_avatars.get(selected_identifier),
@@ -535,11 +700,11 @@ def game_state() -> dict:
         "localSkinSet": selected["type"] == "local" and (data_dir() / "minecraft/CustomSkinLoader/LocalSkin/skins" / f"{selected['name']}.png").is_file(),
         "modCount": mod_count,
         "discordConfigured": bool(str(config.get("discord_application_id", "")).strip()),
-        "packConfigured": bool(config.get("manifest_url")),
-        "localManifest": config.get("manifest_url", "").startswith("file:"),
+        "packConfigured": bool(manifest_url),
+        "localManifest": manifest_url.startswith("file:"),
         "clientConfigured": bool(config.get("microsoft_client_id")),
         "installed": local,
-        "gameDirectory": str(data_dir() / "minecraft"),
+        "gameDirectory": str(game_dir),
         "memoryMb": int(config.get("memory_mb", 8192)),
         "memoryLimitMb": memory_limit_mb(),
         "systemMemoryMb": system_memory_mb(),

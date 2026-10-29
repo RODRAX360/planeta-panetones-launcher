@@ -9,157 +9,92 @@
   <script src="app.js" defer></script>
 </head>
 <body>
-  <video id="background-video" autoplay muted loop playsinline poster="assets/portada.jpg">
-    <source src="assets/fondo.mp4" type="video/mp4">
-  </video>
+  <video id="background-video" muted loop playsinline preload="none" poster="assets/portada.jpg" aria-hidden="true"></video>
   <div class="shade" aria-hidden="true"></div>
-  <div class="window-title">PLANETA PANETONES</div>
-  <img class="brand" src="assets/logo.png" alt="Planeta Panetones">
-
-  <main id="home" class="screen active">
-    <section class="instance-card" aria-label="Instancia">
-      <img class="instance-icon" src="assets/icono.png" alt="">
-      <div class="instance-copy">
-        <h1>Planeta Panetones</h1>
-        <p id="instance-line">Consultando el servidor…</p>
+  <main id="auth" class="screen active" aria-label="Iniciar sesión">
+    <div class="auth-card">
+      <img src="assets/icono.png" alt="" class="auth-icon">
+      <h1>Elige cómo entrar</h1>
+      <p>Usa tu cuenta Microsoft o un perfil local no premium.</p>
+      <button type="button" class="auth-microsoft" id="auth-login"><span aria-hidden="true" class="microsoft-mark"><i></i><i></i><i></i><i></i></span> Iniciar con Microsoft</button>
+      <button type="button" class="auth-local" id="auth-local">Entrar sin cuenta premium</button>
+      <div class="auth-local-form" id="auth-local-form" hidden>
+        <label for="local-name">Nombre del jugador</label>
+        <div class="auth-local-row"><input id="local-name" type="text" maxlength="16" placeholder="De 3 a 16 caracteres" autocomplete="off"><button id="create-local" type="button">Continuar</button></div>
+        <small>Los perfiles locales solo entran en mundos y servidores que los acepten.</small>
       </div>
-      <div class="server-metrics" aria-live="polite">
-        <strong id="server-players">—</strong>
-        <span id="server-latency">Ping —</span>
-      </div>
-      <span class="server-light pending" id="server-light" aria-hidden="true"></span>
-    </section>
-
-    <nav class="bottom-bar" aria-label="Controles principales">
-      <button class="account-button" id="account-button" type="button" title="Cuenta de Minecraft" aria-label="Cuenta de Minecraft">
-        <span class="avatar" id="account-avatar">P</span>
-      </button>
-      <div class="play-group">
-        <button class="play-button" id="play-button" type="button">Jugar</button>
-      </div>
-      <button class="settings-button" id="settings-button" type="button" title="Configuración" aria-label="Configuración">⚙</button>
-    </nav>
+    </div>
   </main>
 
-  <main id="settings" class="screen" aria-label="Configuración">
+  <main id="instances" class="screen" aria-label="Elegir instancia">
+    <button class="bare-avatar instance-account" id="instance-account-button" type="button" aria-label="Ajustes de cuenta"><span class="avatar" id="instance-account-avatar">P</span></button>
+    <div class="server-status" id="server-status" role="status" aria-live="polite">
+      <span class="server-status-icon" aria-hidden="true"><img src="assets/icono.png" alt=""></span>
+      <span class="server-status-copy"><strong>Planeta Panetones</strong><small id="server-line">Servidor próximamente</small></span>
+      <span class="server-status-side"><i id="server-dot" class="server-light"></i><small id="server-ping">Ping —</small></span>
+    </div>
+    <div class="instances-content">
+      <div class="instances-heading"><span class="eyebrow">PLANETA PANETONES</span><h1>Elige una instancia</h1><p>Principal o Optimizada. Cada una conserva sus propios mundos y mods.</p></div>
+      <div class="instance-grid" id="instance-grid"></div>
+      <button type="button" class="update-banner" id="update-banner" hidden>Actualización del launcher disponible</button>
+    </div>
+  </main>
+
+  <main id="home" class="screen" aria-label="Jugar">
+    <button class="bare-avatar play-account" id="account-button" type="button" aria-label="Abrir ajustes"><span class="avatar" id="account-avatar">P</span></button>
+    <div class="play-hero"><img src="assets/logo.png" alt="Planeta Panetones"><span id="play-instance-name">Principal</span></div>
+    <button type="button" class="home-button" id="instances-home" aria-label="Volver a instancias" title="Volver a instancias"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V21h-6v-7H9v7H3z"/></svg></button>
+    <button class="play-button" id="play-button" type="button" disabled>Jugar</button>
+  </main>
+
+  <main id="settings" class="screen" aria-label="Ajustes generales">
     <aside class="settings-nav">
-      <h2>Configuración</h2>
-      <button type="button" class="tab active" data-tab="accounts">Cuentas</button>
-      <button type="button" class="tab" data-tab="java">Java</button>
-      <button type="button" class="tab" data-tab="minecraft">Minecraft</button>
+      <h2>Ajustes</h2>
+      <button type="button" class="tab active" data-tab="accounts">Cuenta</button>
+      <button type="button" class="tab" data-tab="resources">Recursos</button>
       <button type="button" class="tab" data-tab="launcher">Launcher</button>
-      <button type="button" class="tab" data-tab="credits">Créditos</button>
-      <button type="button" class="back-button" id="back-button">Volver</button>
+      <button type="button" class="tab" data-tab="terms">Términos</button>
+      <button type="button" class="back-button" id="settings-save">Guardar y volver</button>
     </aside>
     <div class="settings-content">
       <section class="tab-panel active" id="accounts-panel">
-        <h2>Cuentas</h2>
-        <div class="panel-card">
-          <h3>Tu cuenta de Minecraft</h3>
-          <p id="account-detail">Inicia sesión con Microsoft para jugar. El launcher comprobará tu licencia de Minecraft.</p>
-          <button type="button" class="action-button secondary account-add-button" id="login-button">＋ Añadir una nueva cuenta Microsoft</button>
+        <h2>Cuenta actual</h2>
+        <div class="panel-card account-summary">
+          <span class="avatar large" id="settings-avatar">P</span>
+          <div><strong id="settings-account-name">Sin cuenta</strong><small id="settings-account-type">Conecta una cuenta para jugar</small></div>
+          <button type="button" class="remove-account" id="remove-account" aria-label="Quitar cuenta">Quitar</button>
         </div>
-        <div class="panel-card">
-          <h3>Tus cuentas</h3>
-          <p>Elige una cuenta Microsoft o un perfil local. Los perfiles locales no tienen licencia verificada y solo pueden entrar a mundos y servidores que los acepten.</p>
-          <div class="profile-list" id="profile-list"></div>
-          <div class="button-row profile-create">
-            <input id="local-name" type="text" maxlength="16" placeholder="Nombre del perfil local" aria-label="Nombre del perfil local" autocomplete="off">
-            <button type="button" class="action-button secondary" id="create-local">Crear perfil local</button>
-          </div>
-        </div>
-        <div class="panel-card" id="skin-card" hidden>
-          <h3>Skin del perfil local</h3>
-          <div class="skin-preview"><span class="avatar large" id="skin-avatar">P</span><p id="skin-detail">Elige una skin PNG de Minecraft de 64×64 o 64×32 píxeles.</p></div>
-          <button type="button" class="action-button secondary" id="choose-skin">Elegir PNG de skin</button>
-          <p class="muted">La skin se guarda en tu PC. Se mostrará dentro del juego si el pack incluye Custom Skin Loader; otros jugadores necesitan una forma compatible de cargarla para verla.</p>
-        </div>
+        <p class="setting-note">Solo se permite una cuenta activa. Para usar otra, quita la actual y vuelve a iniciar sesión.</p>
+        <div class="panel-card" id="skin-card" hidden><h3>Skin del perfil local</h3><p id="skin-detail">Puedes elegir una skin PNG de Minecraft.</p><button type="button" class="action-button" id="choose-skin">Elegir skin PNG</button></div>
       </section>
-      <section class="tab-panel" id="java-panel">
-        <h2>Java y memoria</h2>
-        <div class="panel-card">
-          <h3>Java propio del launcher</h3>
-          <p>Minecraft y Java 17 se descargan a la carpeta de Planeta Panetones durante la primera instalación.</p>
-        </div>
-        <div class="panel-card">
-          <h3>Memoria para Minecraft</h3>
-          <p>Elige cuánta RAM puede utilizar el juego. Deja memoria libre para el sistema y otras aplicaciones.</p>
-          <div class="memory-control">
-            <input id="memory-range" type="range" min="2048" max="32768" step="64" aria-label="Memoria asignada a Minecraft">
-            <div class="memory-entry"><input id="memory-input" type="number" min="2048" max="32768" step="64" aria-label="Memoria en MiB"><span>MiB</span></div>
-          </div>
-          <p class="muted">Asignada: <strong id="memory-label">—</strong> · Disponible en el equipo: <strong id="system-memory-label">—</strong></p>
-          <button type="button" class="action-button secondary" id="save-memory">Guardar RAM</button>
-        </div>
-      </section>
-      <section class="tab-panel" id="minecraft-panel">
-        <h2>Minecraft</h2>
-        <div class="panel-card">
-          <h3>Resolución de Minecraft</h3>
-          <p>Personaliza el tamaño de la ventana al iniciar el juego. La resolución predeterminada es 854 × 480; 1280 × 720 suele verse mejor en pantallas actuales.</p>
-          <div class="resolution-control">
-            <input id="resolution-width" type="number" min="640" max="7680" value="854" aria-label="Ancho en píxeles">
-            <span>×</span>
-            <input id="resolution-height" type="number" min="360" max="4320" value="480" aria-label="Alto en píxeles">
-          </div>
-          <div class="button-row">
-            <button type="button" class="action-button secondary" id="save-resolution">Guardar resolución</button>
-            <button type="button" class="action-button secondary" id="reset-resolution">Restablecer a 854 × 480</button>
-          </div>
-          <p class="muted" id="resolution-status">Se usa la resolución predeterminada.</p>
-        </div>
-        <div class="panel-card details">
-          <div><span>Versión</span><strong id="minecraft-version">1.20.1</strong></div>
-          <div><span>Cargador</span><strong id="forge-version">Forge</strong></div>
-          <div><span>Mods del pack</span><strong id="mod-count">—</strong></div>
-          <div><span>Instancia</span><strong>Planeta Panetones</strong></div>
-        </div>
-        <div class="panel-card">
-          <h3>Instancia y mods</h3>
-          <p>Abre la carpeta de Planeta Panetones para ver tus mundos, capturas y archivos. Puedes añadir mods propios en la carpeta de mods; los archivos administrados por el pack se verificarán al iniciar.</p>
-          <div class="button-row">
-            <button type="button" class="action-button secondary" id="open-folder">Abrir instancia</button>
-            <button type="button" class="action-button secondary" id="open-mods-folder">Abrir mods</button>
-            <button type="button" class="action-button secondary" id="update-button">Instalar / actualizar</button>
-          </div>
-        </div>
+      <section class="tab-panel" id="resources-panel">
+        <h2>Recursos</h2>
+        <div class="panel-card"><h3>Memoria para Minecraft</h3><p>Este ajuste se aplica a todas las instancias.</p><div class="memory-control"><input id="memory-range" type="range" min="2048" max="32768" step="64" aria-label="Memoria asignada"><div class="memory-entry"><input id="memory-input" type="number" min="2048" max="32768" step="64" aria-label="Memoria en MiB"><span>MiB</span></div></div><p class="muted">Asignada: <strong id="memory-label">—</strong> · RAM física: <strong id="system-memory-label">—</strong></p></div>
+        <div class="panel-card"><h3>Ventana del juego</h3><label class="switch-row"><span>Usar resolución personalizada</span><input id="resolution-enabled" type="checkbox"></label><div class="resolution-control"><input id="resolution-width" type="number" min="640" max="7680" value="854" aria-label="Ancho en píxeles"><span>×</span><input id="resolution-height" type="number" min="360" max="4320" value="480" aria-label="Alto en píxeles"></div><p class="muted">Se aplica a todas las instancias.</p></div>
       </section>
       <section class="tab-panel" id="launcher-panel">
         <h2>Launcher</h2>
-        <div class="panel-card">
-          <h3>Fondo animado</h3>
-          <p>Video «minecraft-earth.3840x2160.mp4» en bucle.</p>
-          <label class="switch-row"><span>Reproducir video</span><input id="video-toggle" type="checkbox" checked></label>
-        </div>
-        <div class="panel-card">
-          <h3>Discord</h3>
-          <p id="discord-detail">Comprobando Rich Presence…</p>
-        </div>
-        <div class="panel-card">
-          <h3>Servidor oficial</h3>
-          <p id="server-detail">La dirección pública se añadirá cuando el servidor esté disponible.</p>
-        </div>
-        <div class="panel-card">
-          <h3>Actualizaciones del pack</h3>
-          <p id="manifest-source">El launcher comprobará el manifiesto del pack antes de iniciar Minecraft.</p>
-          <p>Los mundos, capturas y archivos personales permanecen en la carpeta del jugador cuando se actualiza el pack.</p>
-        </div>
+        <div class="panel-card"><h3>Apariencia</h3><label class="switch-row"><span>Reproducir fondo animado</span><input id="video-toggle" type="checkbox" checked></label></div>
+        <div class="panel-card"><h3>Actualizaciones</h3><p id="launcher-update-detail">Comprobando versión…</p><p id="manifest-source">El pack se verifica antes de jugar.</p><button type="button" class="action-button" id="update-button">Verificar instancia ahora</button></div>
+        <div class="panel-card"><h3>Archivos</h3><div class="button-row"><button type="button" class="action-button" id="open-folder">Abrir instancia</button><button type="button" class="action-button" id="open-mods-folder">Abrir mods</button></div></div>
+        <div class="panel-card"><h3>Servidor oficial</h3><p id="server-detail">Servidor próximamente.</p></div>
       </section>
-      <section class="tab-panel" id="credits-panel">
-        <h2>Créditos</h2>
-        <div class="panel-card">
-          <h3>Planeta Panetones</h3>
-          <p><strong>Creado y diseñado por Rodrax360.</strong></p>
-          <p>Planeta Panetones nace para convertir el acceso a su mundo de Minecraft en una experiencia propia: una puerta de entrada con identidad, ambiente y detalles pensados para su comunidad.</p>
-          <p>Desde el primer momento hasta el inicio de cada partida, este launcher acompaña la aventura y reúne todo lo necesario para volver a explorar, construir y compartir.</p>
-          <p class="muted">Hecho con dedicación para quienes forman parte de Planeta Panetones. · @rodrax360</p>
-        </div>
+      <section class="tab-panel" id="terms-panel">
+        <h2>Términos y condiciones</h2>
+        <div class="panel-card"><h3>Uso del launcher</h3><p>Planeta Panetones instala y actualiza las instancias que elijas. Cada jugador es responsable de usar una cuenta de Minecraft válida cuando el servidor requiera autenticación.</p><p>Los perfiles locales solo funcionan en mundos y servidores que los acepten. El launcher guarda la cuenta y las preferencias en este equipo y no envía credenciales al servidor del modpack.</p><p>El uso de Minecraft y de los mods está sujeto a los términos de sus respectivos autores. Planeta Panetones no está afiliado a Mojang ni Microsoft.</p></div>
       </section>
     </div>
   </main>
-  <div class="download-status" id="download-status" aria-live="polite">
-    <span id="download-text"></span>
-    <progress id="download-progress" max="100" value="0"></progress>
+  <div class="download-status" id="download-status" role="status" aria-live="polite">
+    <div class="download-card">
+      <img class="download-icon" src="assets/icono.png" alt="">
+      <div class="download-info">
+        <strong id="download-title">Preparando instancia</strong>
+        <span id="download-text">Comprobando archivos…</span>
+        <div class="download-progress-row"><progress id="download-progress" max="100" value="0"></progress><span id="download-percent">0%</span></div>
+        <button id="cancel-login" type="button" hidden>Cancelar inicio de sesión</button>
+      </div>
+    </div>
   </div>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 </body>

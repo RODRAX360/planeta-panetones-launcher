@@ -13,4 +13,7 @@ logs/
 saves/
 screenshots/
 Planeta-Panetones.desktop
-assets/fondo.mp4
+assets/launcher.ico
+build/
+dist/
+*.spec

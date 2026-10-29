@@ -1,0 +1,10 @@
+{
+  "manifest_url": "https://raw.githubusercontent.com/RODRAX360/planeta-panetones-launcher/main/manifest.json",
+  "optimized_manifest_url": "https://raw.githubusercontent.com/RODRAX360/planeta-panetones-launcher/main/optimizado/manifest.json",
+  "launcher_update_url": "https://raw.githubusercontent.com/RODRAX360/planeta-panetones-launcher/main/launcher-update.json",
+  "microsoft_client_id": "51df3350-f28d-4ba7-b819-b508408cd0c3",
+  "discord_application_id": "1562632718414643220",
+  "server_address": "",
+  "redirect_uri": "http://localhost:8765/callback",
+  "memory_mb": 11712
+}
