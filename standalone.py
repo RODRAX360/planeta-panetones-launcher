@@ -72,6 +72,9 @@ def read_config() -> dict:
             config["optimized_manifest_url"] = optimized.as_uri()
     if not config.get("launcher_update_url") and str(config.get("manifest_url", "")).startswith("https://"):
         config["launcher_update_url"] = urllib.parse.urljoin(config["manifest_url"], "launcher-update.json")
+    if sys.platform.startswith("linux") and str(config.get("manifest_url", "")).startswith("https://"):
+        config["launcher_update_url"] = config.get("linux_launcher_update_url") or urllib.parse.urljoin(
+            config["manifest_url"], "launcher-update-linux.json")
     return config
 
 

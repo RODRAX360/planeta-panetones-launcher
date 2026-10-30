@@ -1,0 +1,60 @@
+name: Compilar AppImage Linux
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - version.py
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  linux:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Obtener proyecto
+        uses: actions/checkout@v4
+      - name: Preparar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Instalar dependencias
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libfuse2
+          python -m pip install -r requirements.txt pyinstaller
+      - name: Obtener appimagetool verificado
+        run: |
+          curl --fail --location --retry 3 --output appimagetool-x86_64.AppImage \
+            https://github.com/AppImage/appimagetool/releases/download/1.9.1/appimagetool-x86_64.AppImage
+          echo 'ed4ce84f0d9caff66f50bcca6ff6f35aae54ce8135408b3fa33abfc3cb384eb0  appimagetool-x86_64.AppImage' | sha256sum --check
+          chmod +x appimagetool-x86_64.AppImage
+      - name: Compilar AppImage y manifiesto
+        run: |
+          python build_linux.py --appimagetool ./appimagetool-x86_64.AppImage
+          python release_launcher_linux.py
+      - name: Probar arranque empaquetado
+        run: |
+          APPIMAGE_EXTRACT_AND_RUN=1 dist/PlanetaPanetones-*-x86_64.AppImage --self-test
+      - name: Publicar AppImage
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version=$(python -c 'from version import VERSION; print(VERSION)')
+          gh release create "launcher-linux-v${version}" "dist/PlanetaPanetones-${version}-x86_64.AppImage" \
+            --title "Planeta Panetones Linux ${version}" \
+            --notes "AppImage x86_64. Descarga la instancia al pulsar Jugar."
+      - name: Publicar aviso de actualización
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python publish_update_manifest.py dist/launcher-update-linux.json launcher-update-linux.json
+      - name: Adjuntar descarga
+        uses: actions/upload-artifact@v4
+        with:
+          name: PlanetaPanetones-Linux
+          path: |
+            dist/PlanetaPanetones-*-x86_64.AppImage
+            dist/launcher-update-linux.json
+          if-no-files-found: error

@@ -2,13 +2,13 @@
 
 Launcher de escritorio independiente para **Minecraft: Java Edition 1.20.1** y **Forge 47.4.20**. Los jugadores no necesitan tener una instancia previa en Modrinth. El launcher instala Minecraft, Java y Forge, descarga el modpack desde un hosting HTTPS y abre el juego con una cuenta Microsoft o un perfil local cuando el servidor lo acepte.
 
-> **Estado:** en desarrollo. El inicio de sesión con Microsoft ya funciona. Faltan las URL públicas HTTPS del pack y una compilación del instalador de Windows para entregar a jugadores.
+> **Estado:** los manifiestos del pack están publicados en GitHub Releases. El instalador de Windows y el AppImage de Linux se generan con GitHub Actions.
 
 **For Minecraft API reviewers:** this is a desktop launcher for a Forge 1.20.1 modpack. Players authenticate with their own Microsoft accounts through the system browser using OAuth 2.0 authorization code with PKCE. The application exchanges tokens directly with Microsoft, Xbox and Minecraft services to verify ownership and launch the player's licensed game. Credentials and tokens are never sent to our modpack server.
 
 ## Cómo funciona
 
-1. Al abrirse, comprueba si hay una actualización del ejecutable y la instala antes de mostrar la interfaz, cuando está configurada y se ejecuta en Windows.
+1. Al abrirse, comprueba si hay una actualización del ejecutable y la instala antes de mostrar la interfaz, cuando se usa el instalador de Windows o un AppImage de Linux modificable.
 2. El jugador elige una cuenta Microsoft o un perfil local no premium. Microsoft usa OAuth 2.0 con PKCE en el navegador del sistema; el launcher no solicita la contraseña.
 3. Tras entrar, elige **Principal** u **Optimizada**. En la pantalla de la instancia puede abrir los ajustes con la cabeza del jugador o volver al selector con la casita.
 4. Al pulsar **Jugar**, el launcher muestra el progreso, verifica el manifiesto de esa instancia, descarga los archivos modificados y comprueba tamaño y SHA-256. También instala Minecraft 1.20.1, Java y Forge 47.4.20 cuando hace falta.
@@ -39,7 +39,7 @@ La portada reproduce el video de fondo por defecto. Se pausa al entrar a Configu
 
 La configuración está en [`launcher-config.json`](launcher-config.json). `microsoft_client_id` identifica la aplicación registrada en Microsoft Entra; `redirect_uri` debe coincidir con su URI de redirección. `manifest_url` será la URL HTTPS pública del manifiesto del pack. Si existe un directorio local `publicar/` y no hay URL configurada, el launcher puede usarlo para pruebas locales.
 `optimized_manifest_url` apunta al manifiesto HTTPS de la variante ligera y también es obligatorio para compilar el instalador. Durante el desarrollo, si queda vacío y `manifest_url` es HTTPS, se usa `optimizado/manifest.json` junto al manifiesto principal; en pruebas locales se usa `publicar/optimizado/manifest.json`.
-`launcher_update_url` puede apuntar al manifiesto HTTPS del ejecutable. Si queda vacío y `manifest_url` es HTTPS, se usa `launcher-update.json` junto al manifiesto principal.
+`launcher_update_url` apunta al manifiesto HTTPS de Windows. En Linux se usa `launcher-update-linux.json` junto al manifiesto principal, salvo que se configure `linux_launcher_update_url`.
 
 Cada jugador puede ajustar la RAM y la resolución de inicio en **Ajustes → Recursos**. Esas preferencias se guardan juntas en `PlanetaPanetones/preferences.json` dentro de la carpeta de datos de su usuario y se aplican a **todas** las instancias. En **Ajustes → Launcher** también puede abrir la instancia, la carpeta de mods y ejecutar una verificación completa del pack. Los mods añadidos por el jugador se conservan si no coinciden con archivos administrados por el manifiesto.
 Al jugar, el launcher reutiliza los hashes de archivos del pack cuyo tamaño y fecha de modificación no cambiaron. **Verificar instancia ahora** ejecuta una verificación completa de SHA-256 y repara archivos distintos del manifiesto.
@@ -73,13 +73,19 @@ El instalador conserva la portada, tarjetas de instancias, iconos, fuentes y pan
 
 1. Publica los dos ZIP y los dos manifiestos como se indica arriba. Configura `server_address` cuando exista un servidor público.
 2. En Windows instala Python, NSIS y las dependencias: `py -m pip install -r requirements.txt pyinstaller pillow`.
-3. Incrementa `VERSION` en `version.py` (formato `X.Y.Z`) y ejecuta `py build_release_windows.py --base-url https://raw.githubusercontent.com/RODRAX360/planeta-panetones-launcher/main --installer-base-url https://github.com/RODRAX360/planeta-panetones-launcher/releases/download/launcher-v1.0.1` (cambia la etiqueta `launcher-v1.0.1` si la versión es otra). El instalador aparecerá en `dist/PlanetaPanetones-Setup-X.Y.Z.exe`.
+3. Incrementa `VERSION` en `version.py` (formato `X.Y.Z`) y ejecuta `py build_release_windows.py --base-url https://raw.githubusercontent.com/RODRAX360/planeta-panetones-launcher/main --installer-base-url https://github.com/RODRAX360/planeta-panetones-launcher/releases/download/launcher-vX.Y.Z` (sustituye `X.Y.Z` por la versión). El instalador aparecerá en `dist/PlanetaPanetones-Setup-X.Y.Z.exe`.
 4. Sube el instalador a esa Release y después publica `dist/launcher-update.json` en la raíz del repositorio. Publicar el JSON al final evita anunciar un archivo que aún no existe.
 
 También puedes generar el instalador y su manifiesto con una sola orden en Windows: `crear-instalador-windows.bat URL_MANIFIESTOS URL_RELEASE_INSTALADOR`. El script instala las dependencias Python de compilación, incorpora esas URL en el ejecutable y genera `dist/launcher-update.json`; NSIS debe estar instalado y `makensis.exe` disponible en el PATH. La configuración local del proyecto se restaura al terminar.
 La compilación comprueba que los dos manifiestos del pack ya respondan por HTTPS antes de crear el instalador.
 
-En GitHub, el flujo **Compilar instalador Windows** se ejecuta al subir cambios del launcher a `main` o manualmente. Crea la Release `launcher-vX.Y.Z` con el `.exe`, publica después `launcher-update.json` y conserva una copia en los artefactos de la ejecución. Para publicar otra versión, incrementa `VERSION` antes de subir el código.
+En GitHub, el flujo **Compilar instalador Windows** se ejecuta al incrementar `VERSION` en `main` o manualmente. Crea la Release `launcher-vX.Y.Z` con el `.exe`, publica después `launcher-update.json` y conserva una copia en los artefactos de la ejecución.
+
+## Linux
+
+El flujo **Compilar AppImage Linux** se ejecuta al incrementar `VERSION` o manualmente. Crea `PlanetaPanetones-X.Y.Z-x86_64.AppImage` en la Release `launcher-linux-vX.Y.Z` y publica `launcher-update-linux.json` después de subirlo. En Linux x86_64, descarga el AppImage, marca el archivo como ejecutable (`chmod +x PlanetaPanetones-*.AppImage`) y ábrelo. El modpack no está dentro: se descarga al pulsar **Jugar**. Los datos se guardan en `~/.local/share/PlanetaPanetones` o en `$XDG_DATA_HOME/PlanetaPanetones`.
+
+Si el AppImage está en una carpeta que el usuario puede modificar, el launcher descarga y verifica una versión nueva, sustituye el AppImage al cerrarse y vuelve a abrirse. Si está en una carpeta de solo lectura, muestra el aviso para descargar la versión nueva manualmente.
 
 El instalador **no incluye las instancias**. Para compilarlo se requieren las URL HTTPS de ambos manifiestos; el launcher descarga Minecraft, Java, Forge y los archivos de la instancia elegida al pulsar **Jugar** por primera vez. Los siguientes arranques solo descargan los archivos nuevos o modificados. La carpeta local `publicar/` sirve para preparar y probar el pack, pero nunca se empaqueta en el `.exe`.
 

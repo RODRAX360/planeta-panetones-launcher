@@ -82,7 +82,7 @@ class Bridge(QObject):
         def check() -> None:
             try:
                 result = launcher_updates.inspect_update(
-                    url, install_supported=sys.platform == "win32" and bool(getattr(sys, "frozen", False)))
+                    url, install_supported=launcher_updates.can_self_update())
                 public = {key: value for key, value in result.items() if key != "update"}
                 self._preflight_state = public
                 self._emit("launcher_update_status", **public)
@@ -488,7 +488,7 @@ def main() -> int:
         messages = {
             "current": "Tienes la versión más reciente.",
             "unconfigured": "Actualizaciones sin configurar.",
-            "unsupported": "Hay una versión nueva para Windows.",
+            "unsupported": "Hay una versión nueva disponible.",
             "error": "No se pudo comprobar la actualización.",
         }
         if status == "error" and bridge._preflight_state.get("retryAvailable"):
@@ -553,4 +553,11 @@ def main() -> int:
 
 
 if __name__ == "__main__":
+    if "--self-test" in sys.argv:
+        for resource in ("index.html", "app.js", "style.css", "assets/icono.png"):
+            if not (APP_DIR / resource).is_file():
+                raise SystemExit(f"Falta el recurso {resource}")
+        standalone.read_config()
+        print("Launcher y recursos listos.")
+        raise SystemExit(0)
     raise SystemExit(main())

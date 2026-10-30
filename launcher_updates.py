@@ -1,4 +1,4 @@
-"""Checks and installs a published Windows launcher update."""
+"""Checks and installs a published launcher update for Windows or Linux."""
 
 import hashlib
 import json
@@ -15,6 +15,17 @@ from standalone import data_dir
 from version import VERSION
 
 MAX_INSTALLER_BYTES = 500 * 1024 * 1024
+
+
+def can_self_update() -> bool:
+    if not getattr(sys, "frozen", False):
+        return False
+    if sys.platform == "win32":
+        return True
+    if sys.platform.startswith("linux"):
+        appimage = os.environ.get("APPIMAGE", "")
+        return bool(appimage and Path(appimage).is_file() and os.access(Path(appimage).parent, os.W_OK))
+    return False
 
 
 def _https_url(value: str) -> str:
@@ -85,7 +96,7 @@ def inspect_update(manifest_url: str, *, install_supported: bool) -> dict:
     if not install_supported:
         return {
             "status": "unsupported",
-            "message": "Hay una versión nueva; la instalación automática requiere el ejecutable de Windows.",
+            "message": "Hay una versión nueva; descarga el instalador para actualizar este launcher.",
             "version": VERSION,
             "availableVersion": update["version"],
         }
@@ -102,12 +113,14 @@ def download_installer(update: dict, progress: Callable[[int, int], None]) -> Pa
     """Download to a temporary file and publish it only after SHA-256 verification."""
     directory = data_dir() / "updates"
     directory.mkdir(parents=True, exist_ok=True)
-    destination = directory / f"PlanetaPanetones-Setup-{update['version']}.exe"
+    filename = (f"PlanetaPanetones-{update['version']}-x86_64.AppImage"
+                if sys.platform.startswith("linux") else f"PlanetaPanetones-Setup-{update['version']}.exe")
+    destination = directory / filename
     if destination.is_file() and destination.stat().st_size == update["size"]:
         if _hash_file(destination) == update["sha256"]:
             progress(update["size"], update["size"])
             return destination
-    temporary = destination.with_suffix(".exe.part")
+    temporary = destination.with_name(destination.name + ".part")
     digest = hashlib.sha256()
     transferred = 0
     try:
@@ -140,8 +153,29 @@ def _hash_file(path: Path) -> str:
 
 
 def start_installer_after_exit(installer: Path) -> None:
+    if sys.platform.startswith("linux") and can_self_update():
+        target = Path(os.environ["APPIMAGE"]).resolve()
+        script = data_dir() / "updates" / "install-after-exit.sh"
+        script.write_text(
+            '#!/bin/sh\n'
+            'parent="$1"\n'
+            'download="$2"\n'
+            'target="$3"\n'
+            'while kill -0 "$parent" 2>/dev/null; do sleep 1; done\n'
+            'pending="${target}.update.$$"\n'
+            'if cp -- "$download" "$pending" && chmod 755 "$pending" && mv -f -- "$pending" "$target"; then\n'
+            '  nohup "$target" >/dev/null 2>&1 &\n'
+            'else\n'
+            '  rm -f -- "$pending"\n'
+            '  nohup "$target" >/dev/null 2>&1 &\n'
+            'fi\n',
+            encoding="utf-8",
+        )
+        subprocess.Popen(["/bin/sh", str(script), str(os.getpid()), str(installer), str(target)],
+                         start_new_session=True, close_fds=True)
+        return
     if sys.platform != "win32" or not getattr(sys, "frozen", False):
-        raise RuntimeError("La actualización automática del ejecutable requiere Windows instalado.")
+        raise RuntimeError("La actualización automática requiere un instalador de Windows o AppImage modificable.")
     script = data_dir() / "updates" / "install-after-exit.ps1"
     script.write_text(
         "param([int]$ParentPid, [string]$Installer, [string]$Launcher)\n"

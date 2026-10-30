@@ -3,10 +3,8 @@ name: Compilar instalador Windows
 on:
   push:
     branches: [main]
-    paths-ignore:
-      - manifest.json
-      - optimizado/manifest.json
-      - launcher-update.json
+    paths:
+      - version.py
   workflow_dispatch:
 
 permissions:
@@ -47,13 +45,10 @@ jobs:
           gh release create $tag $exe --title "Planeta Panetones $version" --notes "Instalador ligero para Windows. Las instancias se descargan al pulsar Jugar."
       - name: Publicar aviso de actualización
         shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
-          Copy-Item dist/launcher-update.json launcher-update.json
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add launcher-update.json
-          git commit -m "Publicar actualización del launcher" || exit 0
-          git push
+          python publish_update_manifest.py dist/launcher-update.json launcher-update.json
       - name: Adjuntar descarga
         uses: actions/upload-artifact@v4
         with:
