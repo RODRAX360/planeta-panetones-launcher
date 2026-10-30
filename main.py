@@ -31,7 +31,7 @@ class Bridge(QObject):
     preflightFinished = Signal(str)
     requestMinimize = Signal()
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, *, skip_auto_update=False):
         super().__init__(parent)
         self._lock = threading.Lock()
         self._server_address = str(standalone.read_config().get("server_address", "")).strip()
@@ -43,6 +43,7 @@ class Bridge(QObject):
         self._preflight_state = {"status": "checking", "message": "Comprobando el launcher…",
                                  "version": launcher_updates.VERSION}
         self._login_cancel_event = None
+        self._skip_auto_update = skip_auto_update
 
     def _emit(self, kind: str, **fields):
         self.event.emit(json.dumps({"type": kind, **fields}, ensure_ascii=False))
@@ -88,6 +89,15 @@ class Bridge(QObject):
                 self._emit("launcher_update_status", **public)
                 if result["status"] == "available":
                     self._launcher_update = result["update"]
+                    failed_before = launcher_updates.failed_update_marker(result["availableVersion"]).is_file()
+                    if self._skip_auto_update or failed_before:
+                        if failed_before:
+                            public["message"] = "La instalación automática falló. Reintenta desde el launcher o descarga el instalador."
+                        public["retryAvailable"] = True
+                        self._preflight_state = public
+                        self._emit("launcher_update_status", **public)
+                        self.preflightFinished.emit("available")
+                        return
                     if self._install_launcher_update():
                         return
                     public = {"status": "available", "message": "No se pudo instalar la actualización. Puedes reintentar desde el selector.",
@@ -95,7 +105,7 @@ class Bridge(QObject):
                               "availableVersion": result["availableVersion"], "retryAvailable": True}
                     self._preflight_state = public
                     self._emit("launcher_update_status", **public)
-                    self.preflightFinished.emit("error")
+                    self.preflightFinished.emit("available")
                 else:
                     self.preflightFinished.emit(public["status"])
             except Exception as exc:
@@ -352,7 +362,7 @@ class StartupSplash(QWidget):
         painter.end()
 
 
-def main() -> int:
+def main(*, skip_auto_update=False) -> int:
     os.environ.setdefault("QTWEBENGINE_CHROMIUM_FLAGS", "--autoplay-policy=no-user-gesture-required")
     app = QApplication(sys.argv)
     app.setApplicationName("Planeta Panetones")
@@ -463,7 +473,7 @@ def main() -> int:
     view.settings().setAttribute(QWebEngineSettings.WebAttribute.PlaybackRequiresUserGesture, False)
     view.settings().setAttribute(QWebEngineSettings.WebAttribute.LocalContentCanAccessFileUrls, True)
     channel = QWebChannel(view.page())
-    bridge = Bridge(window)
+    bridge = Bridge(window, skip_auto_update=skip_auto_update)
     bridge.requestClose.connect(app.quit)
     bridge.requestMinimize.connect(window.showMinimized)
     channel.registerObject("launcher", bridge)
@@ -490,6 +500,7 @@ def main() -> int:
             "unconfigured": "Actualizaciones sin configurar.",
             "unsupported": "Hay una versión nueva disponible.",
             "error": "No se pudo comprobar la actualización.",
+            "available": "Actualización disponible en el launcher.",
         }
         if status == "error" and bridge._preflight_state.get("retryAvailable"):
             splash_state["message"] = "No se pudo instalar. Podrás reintentar dentro del launcher."
@@ -560,4 +571,7 @@ if __name__ == "__main__":
         standalone.read_config()
         print("Launcher y recursos listos.")
         raise SystemExit(0)
-    raise SystemExit(main())
+    skip_auto_update = "--skip-auto-update" in sys.argv
+    if skip_auto_update:
+        sys.argv.remove("--skip-auto-update")
+    raise SystemExit(main(skip_auto_update=skip_auto_update))

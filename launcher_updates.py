@@ -6,6 +6,7 @@ import os
 import re
 import subprocess
 import sys
+import time
 import urllib.parse
 import urllib.request
 from pathlib import Path
@@ -15,6 +16,40 @@ from standalone import data_dir
 from version import VERSION
 
 MAX_INSTALLER_BYTES = 500 * 1024 * 1024
+
+
+def failed_update_marker(version: str) -> Path:
+    if not re.fullmatch(r"\d+\.\d+\.\d+", version):
+        raise ValueError("Versión de actualización inválida.")
+    return data_dir() / "updates" / f"failed-{version}.txt"
+
+
+def windows_handoff_script() -> str:
+    """Keep a failed installation from leaving the user without a launcher."""
+    return (
+        "param([int]$ParentPid, [string]$Installer, [string]$Launcher, "
+        "[string]$ReadyFile, [string]$FailedFile, [string]$LogFile)\n"
+        "$ErrorActionPreference = 'Stop'\n"
+        "function Write-UpdateLog([string]$Message) {\n"
+        "  Add-Content -Path $LogFile -Value \"$(Get-Date -Format o) $Message\" -Encoding UTF8\n"
+        "}\n"
+        "try {\n"
+        "  Set-Content -Path $ReadyFile -Value 'ready' -Encoding ASCII\n"
+        "  Wait-Process -Id $ParentPid -ErrorAction SilentlyContinue\n"
+        "  Start-Sleep -Milliseconds 500\n"
+        "  $process = Start-Process -FilePath $Installer -ArgumentList '/S' -PassThru -Wait -ErrorAction Stop\n"
+        "  if ($process.ExitCode -ne 0) { throw \"Instalador terminó con código $($process.ExitCode)\" }\n"
+        "  Remove-Item -Path $FailedFile -ErrorAction SilentlyContinue\n"
+        "  Write-UpdateLog 'Instalación completada'\n"
+        "} catch {\n"
+        "  Set-Content -Path $FailedFile -Value ($_.Exception.Message) -Encoding UTF8\n"
+        "  Write-UpdateLog \"Instalación fallida: $($_.Exception.Message)\"\n"
+        "} finally {\n"
+        "  try {\n"
+        "    Start-Process -FilePath $Launcher -ArgumentList '--skip-auto-update' -ErrorAction Stop\n"
+        "  } catch { Write-UpdateLog \"No se pudo reabrir: $($_.Exception.Message)\" }\n"
+        "}\n"
+    )
 
 
 def can_self_update() -> bool:
@@ -176,18 +211,28 @@ def start_installer_after_exit(installer: Path) -> None:
         return
     if sys.platform != "win32" or not getattr(sys, "frozen", False):
         raise RuntimeError("La actualización automática requiere un instalador de Windows o AppImage modificable.")
-    script = data_dir() / "updates" / "install-after-exit.ps1"
-    script.write_text(
-        "param([int]$ParentPid, [string]$Installer, [string]$Launcher)\n"
-        "Wait-Process -Id $ParentPid -ErrorAction SilentlyContinue\n"
-        "Start-Sleep -Seconds 1\n"
-        "$process = Start-Process -FilePath $Installer -ArgumentList '/S' -PassThru -Wait\n"
-        "if ($process.ExitCode -eq 0) { Start-Process -FilePath $Launcher }\n",
-        encoding="utf-8",
-    )
-    subprocess.Popen(
+    directory = data_dir() / "updates"
+    directory.mkdir(parents=True, exist_ok=True)
+    script = directory / "install-after-exit.ps1"
+    ready = directory / "install-ready.txt"
+    version = installer.name.removeprefix("PlanetaPanetones-Setup-").removesuffix(".exe")
+    failed = failed_update_marker(version)
+    log = directory / "update.log"
+    ready.unlink(missing_ok=True)
+    script.write_text(windows_handoff_script(), encoding="utf-8")
+    process = subprocess.Popen(
         ["powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(script),
-         str(os.getpid()), str(installer), str(Path(sys.executable).resolve())],
+         str(os.getpid()), str(installer), str(Path(sys.executable).resolve()), str(ready), str(failed), str(log)],
         creationflags=subprocess.CREATE_NEW_PROCESS_GROUP | subprocess.DETACHED_PROCESS,
         close_fds=True,
     )
+    deadline = time.monotonic() + 5
+    while time.monotonic() < deadline:
+        if ready.is_file():
+            return
+        if process.poll() is not None:
+            break
+        time.sleep(0.05)
+    if process.poll() is None:
+        process.terminate()
+    raise RuntimeError("No se pudo iniciar el instalador. El launcher permanecerá abierto.")
