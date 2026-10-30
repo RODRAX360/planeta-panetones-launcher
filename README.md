@@ -20,7 +20,7 @@ Después de entrar aparece el selector de **Instancias**, con tarjetas para **Pr
 
 La autenticación se realiza directamente entre el equipo del jugador y los servicios de Microsoft, Xbox y Minecraft. El servidor del modpack distribuye archivos del pack; no recibe credenciales ni tokens. Las sesiones renovables se guardan localmente en `accounts.json` con permisos restrictivos. Si había una sesión en el antiguo `account.json`, se conserva al migrar. El launcher no redistribuye los archivos base de Minecraft: los instala desde sus fuentes oficiales.
 
-El inicio de sesión abre el navegador del sistema. Si el jugador cierra esa pestaña sin completar el acceso, puede pulsar **Cancelar inicio de sesión** en el launcher; la espera se interrumpe y los controles vuelven a estar disponibles. La espera también termina sola tras dos minutos.
+El inicio de sesión abre el navegador del sistema. **Iniciar con Microsoft** muestra el selector de cuentas; **Ingresar correo de otra cuenta** pide volver a escribir las credenciales en la página de Microsoft. El launcher nunca pide ni guarda la contraseña. Si Minecraft no devuelve un perfil de Java Edition, el mensaje explica cómo comprobar la cuenta y el perfil en el launcher oficial. Si el jugador cierra la pestaña sin completar el acceso, puede pulsar **Cancelar inicio de sesión**; la espera se interrumpe y los controles vuelven a estar disponibles. La espera también termina sola tras dos minutos.
 
 ## Ejecutar desde el código fuente
 

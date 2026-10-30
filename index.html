@@ -15,9 +15,11 @@
     <div class="auth-card">
       <img src="assets/icono.png" alt="" class="auth-icon">
       <h1>Elige cómo entrar</h1>
-      <p>Usa tu cuenta Microsoft o un perfil local no premium.</p>
+      <p>Microsoft abrirá una pestaña para iniciar sesión con tu correo. También puedes usar un perfil local no premium.</p>
       <button type="button" class="auth-microsoft" id="auth-login"><span aria-hidden="true" class="microsoft-mark"><i></i><i></i><i></i><i></i></span> Iniciar con Microsoft</button>
+      <button type="button" class="auth-fresh" id="auth-fresh">Ingresar correo de otra cuenta</button>
       <button type="button" class="auth-local" id="auth-local">Entrar sin cuenta premium</button>
+      <p id="auth-error" class="auth-error" role="alert" hidden></p>
       <div class="auth-local-form" id="auth-local-form" hidden>
         <label for="local-name">Nombre del jugador</label>
         <div class="auth-local-row"><input id="local-name" type="text" maxlength="16" placeholder="De 3 a 16 caracteres" autocomplete="off"><button id="create-local" type="button">Continuar</button></div>

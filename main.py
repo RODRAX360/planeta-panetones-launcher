@@ -185,7 +185,7 @@ class Bridge(QObject):
     def _start(self, action: str) -> str:
         if not self._lock.acquire(blocking=False):
             return json.dumps({"ok": False, "error": "Hay una operación en curso."})
-        if action == "login":
+        if action in {"login", "loginFresh"}:
             self._login_cancel_event = threading.Event()
         threading.Thread(target=self._run, args=(action,), daemon=True).start()
         return json.dumps({"ok": True})
@@ -204,6 +204,9 @@ class Bridge(QObject):
             instance_id = standalone.selected_instance_id()
             if action == "login":
                 account = standalone.microsoft_login(status, self._login_cancel_event)
+                status(f"Sesión iniciada como {account['name']}.")
+            elif action == "loginFresh":
+                account = standalone.microsoft_login(status, self._login_cancel_event, fresh=True)
                 status(f"Sesión iniciada como {account['name']}.")
             elif action == "update":
                 manifest = standalone.update_pack(status, progress, verify_all=True, instance_id=instance_id)
@@ -226,7 +229,7 @@ class Bridge(QObject):
         except Exception as exc:
             self._emit("error", text=str(exc))
         finally:
-            if action == "login":
+            if action in {"login", "loginFresh"}:
                 self._login_cancel_event = None
             self._lock.release()
             try:
@@ -242,6 +245,10 @@ class Bridge(QObject):
     @Slot(result=str)
     def login(self) -> str:
         return self._start("login")
+
+    @Slot(result=str)
+    def loginFresh(self) -> str:
+        return self._start("loginFresh")
 
     @Slot(result=str)
     def update(self) -> str:

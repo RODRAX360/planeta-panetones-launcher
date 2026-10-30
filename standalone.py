@@ -34,7 +34,14 @@ NAME_PATTERN = re.compile(r"[A-Za-z0-9_]{3,16}\Z")
 
 
 class LoginCancelled(Exception):
-    """The user cancelled the browser-based Microsoft sign-in."""
+    """The user cancelled Microsoft sign-in."""
+
+
+JAVA_PROFILE_MESSAGE = (
+    "Microsoft inició sesión, pero Minecraft no devolvió un perfil de Java Edition para esa cuenta. "
+    "Comprueba en el launcher oficial que entraste con la misma cuenta y que Java Edition está disponible "
+    "y tiene un perfil creado. Si elegiste otra cuenta, quítala en Ajustes y vuelve a iniciar sesión."
+)
 
 
 def data_dir() -> Path:
@@ -458,7 +465,7 @@ def save_account(account: dict) -> None:
     _save_profiles(profiles)
 
 
-def microsoft_login(status, cancel_event: threading.Event | None = None) -> dict:
+def microsoft_login(status, cancel_event: threading.Event | None = None, *, fresh: bool = False) -> dict:
     if (_active_identifier() or "").startswith("local:"):
         raise ValueError("Ya hay un perfil local. Quítalo en Ajustes antes de iniciar sesión con Microsoft.")
     config = read_config()
@@ -471,6 +478,11 @@ def microsoft_login(status, cancel_event: threading.Event | None = None) -> dict
         raise ValueError("El redirect_uri debe ser una dirección HTTP local con puerto.")
 
     login_url, state, verifier = mll.microsoft_account.get_secure_login_data(client_id, redirect_uri)
+    # A browser may already be signed in to a different Microsoft account.
+    url_parts = urllib.parse.urlparse(login_url)
+    login_query = urllib.parse.parse_qsl(url_parts.query, keep_blank_values=True)
+    login_query.append(("prompt", "login" if fresh else "select_account"))
+    login_url = urllib.parse.urlunparse(url_parts._replace(query=urllib.parse.urlencode(login_query)))
 
     class Handler(BaseHTTPRequestHandler):
         def do_GET(self):
@@ -515,6 +527,8 @@ def microsoft_login(status, cancel_event: threading.Event | None = None) -> dict
         raise RuntimeError(
             "Minecraft aún no autoriza esta aplicación. El Client ID de Planeta Panetones necesita permiso para la API de Minecraft."
         ) from exc
+    except mll.exceptions.AccountNotOwnMinecraft as exc:
+        raise ValueError(JAVA_PROFILE_MESSAGE) from exc
     if cancel_event is not None and cancel_event.is_set():
         raise LoginCancelled()
     save_account(account)
@@ -539,8 +553,12 @@ def refreshed_account(status) -> dict:
             config.get("redirect_uri", "http://localhost:8765/callback"),
             old["refresh_token"],
         )
-    except Exception as exc:
+    except mll.exceptions.InvalidRefreshToken as exc:
         raise RuntimeError("La sesión caducó. Vuelve a iniciar sesión en Cuentas.") from exc
+    except mll.exceptions.AccountNotOwnMinecraft as exc:
+        raise ValueError(JAVA_PROFILE_MESSAGE) from exc
+    except Exception as exc:
+        raise RuntimeError("No se pudo verificar la cuenta de Minecraft. Comprueba la conexión e inténtalo de nuevo.") from exc
     save_account(account)
     if not _microsoft_avatar_path(account["id"]).is_file():
         save_microsoft_avatar(account)

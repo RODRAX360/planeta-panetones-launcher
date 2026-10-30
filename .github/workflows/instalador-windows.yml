@@ -34,6 +34,8 @@ jobs:
         run: python -m pip install -r requirements.txt pyinstaller pillow
       - name: Validar actualización de Windows
         run: python -m unittest discover -s tests -p test_windows_updater.py -q
+      - name: Validar inicio de sesión Microsoft
+        run: python -m unittest discover -s tests -p test_microsoft_login.py -q
       - name: Compilar instalador y manifiesto
         shell: pwsh
         run: |

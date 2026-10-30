@@ -29,6 +29,12 @@ function notify(message) {
   toastTimer = setTimeout(() => toast.classList.remove('visible'), 5000);
 }
 
+function showLoginError(message) {
+  const error = $('auth-error');
+  error.textContent = String(message);
+  error.hidden = false;
+}
+
 function setAvatar(element, url, name) {
   if (!element) return;
   element.textContent = url ? '' : String(name || 'P').charAt(0).toUpperCase();
@@ -217,7 +223,7 @@ function setState(raw) {
 function setBusy(busy) {
   operationRunning = Boolean(busy);
   document.body.classList.toggle('is-launching', operationRunning && activeOperation === 'play');
-  for (const id of ['play-button', 'auth-login', 'auth-local', 'create-local', 'update-button', 'settings-save']) {
+  for (const id of ['play-button', 'auth-login', 'auth-fresh', 'auth-local', 'create-local', 'update-button', 'settings-save']) {
     const element = $(id);
     if (element) element.disabled = operationRunning || (id === 'play-button' && (!currentState?.account || !currentState?.packConfigured));
   }
@@ -234,11 +240,14 @@ function setBusy(busy) {
 
 function openProgress(method) {
   activeOperation = method;
-  const login = method === 'login';
+  const login = method === 'login' || method === 'loginFresh';
+  if (login) $('auth-error').hidden = true;
   $('download-title').textContent = login
-    ? 'Conectando con Microsoft'
+    ? method === 'loginFresh' ? 'Iniciar con otra cuenta' : 'Conectando con Microsoft'
     : method === 'play' ? (currentState?.instanceName || 'Instancia') : 'Verificando instancia';
-  $('download-text').textContent = login ? 'Abriendo Microsoft…' : 'Preparando archivos…';
+  $('download-text').textContent = login
+    ? method === 'loginFresh' ? 'Abriendo Microsoft para introducir tu correo…' : 'Abriendo Microsoft…'
+    : 'Preparando archivos…';
   $('download-progress').max = 100;
   $('download-progress').value = 0;
   $('download-percent').textContent = '0%';
@@ -256,7 +265,8 @@ function start(method) {
   bridge[method](raw => {
     const result = parseResult(raw);
     if (result?.ok) return;
-    notify(result?.error || 'No se pudo iniciar la operación.');
+    if (['login', 'loginFresh'].includes(method)) showLoginError(result?.error || 'No se pudo iniciar sesión.');
+    else notify(result?.error || 'No se pudo iniciar la operación.');
     setBusy(false);
   });
 }
@@ -278,7 +288,8 @@ function handleEvent(raw) {
       break;
     }
     case 'error':
-      notify(event.text || 'No se pudo completar la operación.');
+      if (['login', 'loginFresh'].includes(activeOperation)) showLoginError(event.text || 'No se pudo iniciar sesión.');
+      else notify(event.text || 'No se pudo completar la operación.');
       setBusy(false);
       break;
     case 'cancelled':
@@ -375,6 +386,7 @@ document.querySelectorAll('.tab').forEach(element =>
   element.addEventListener('click', () => tab(element.dataset.tab))
 );
 $('auth-login').addEventListener('click', () => start('login'));
+$('auth-fresh').addEventListener('click', () => start('loginFresh'));
 $('auth-local').addEventListener('click', () => {
   $('auth-local-form').hidden = false;
   $('local-name').focus();
@@ -394,7 +406,7 @@ $('local-name').addEventListener('keydown', event => {
   if (event.key === 'Enter') $('create-local').click();
 });
 $('cancel-login').addEventListener('click', () => {
-  if (!bridge || activeOperation !== 'login' || !operationRunning) return;
+  if (!bridge || !['login', 'loginFresh'].includes(activeOperation) || !operationRunning) return;
   $('cancel-login').disabled = true;
   $('download-text').textContent = 'Cancelando inicio de sesión…';
   bridge.cancelLogin(raw => {
@@ -449,7 +461,7 @@ if (updateBanner) {
 document.addEventListener('visibilitychange', syncVideo);
 document.addEventListener('keydown', event => {
   if (event.key !== 'Escape') return;
-  if (activeOperation === 'login' && operationRunning) {
+  if (['login', 'loginFresh'].includes(activeOperation) && operationRunning) {
     $('cancel-login').click();
   } else if (!operationRunning && $('home').classList.contains('active')) {
     show('instances');
