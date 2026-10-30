@@ -1,0 +1,162 @@
+name: Publicar launcher y actualizaciones
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - '**/*.md'
+      - launcher-update.json
+      - launcher-update-linux.json
+      - manifest.json
+      - optimizado/manifest.json
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+# A later commit must never publish an older update feed before this run finishes.
+concurrency:
+  group: planeta-panetones-launcher-release
+  cancel-in-progress: false
+
+jobs:
+  version:
+    runs-on: ubuntu-22.04
+    outputs:
+      number: ${{ steps.next.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validar publicación automática
+        run: |
+          python -m unittest discover -s tests -p test_ci_release_version.py -q
+          python -m unittest discover -s tests -p test_publish_update_manifest.py -q
+      - name: Elegir versión posterior a las ya publicadas
+        id: next
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python ci_release_version.py prepare
+
+  windows:
+    needs: version
+    runs-on: windows-latest
+    steps:
+      - name: Obtener proyecto
+        uses: actions/checkout@v4
+      - name: Preparar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Marcar versión del ejecutable
+        run: python ci_release_version.py stamp "${{ needs.version.outputs.number }}"
+      - name: Instalar NSIS
+        shell: pwsh
+        run: |
+          choco install nsis --yes --no-progress
+          Add-Content -Path $env:GITHUB_PATH -Value 'C:\Program Files (x86)\NSIS'
+      - name: Instalar dependencias
+        run: python -m pip install -r requirements.txt pyinstaller pillow
+      - name: Validar actualización e inicio de sesión
+        run: |
+          python -m unittest discover -s tests -p test_windows_updater.py -q
+          python -m unittest discover -s tests -p test_microsoft_login.py -q
+      - name: Compilar instalador y manifiesto
+        shell: pwsh
+        run: |
+          $version = python -c "from version import VERSION; print(VERSION)"
+          $base = "https://raw.githubusercontent.com/${{ github.repository }}/main"
+          $installer = "https://github.com/${{ github.repository }}/releases/download/launcher-v$version"
+          python build_release_windows.py --base-url $base --installer-base-url $installer
+      - name: Publicar instalador
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $PSNativeCommandUseErrorActionPreference = $false
+          $version = python -c "from version import VERSION; print(VERSION)"
+          $tag = "launcher-v$version"
+          $exe = "dist/PlanetaPanetones-Setup-$version.exe"
+          gh release view $tag *> $null
+          if ($LASTEXITCODE -eq 0) {
+            gh release upload $tag $exe --clobber
+          } else {
+            gh release create $tag $exe --target "${{ github.sha }}" --title "Planeta Panetones $version" --notes "Instalador ligero para Windows. Las instancias se descargan al pulsar Jugar."
+          }
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Guardar manifiesto de Windows
+        uses: actions/upload-artifact@v4
+        with:
+          name: launcher-manifest-windows
+          path: dist/launcher-update.json
+          if-no-files-found: error
+
+  linux:
+    needs: version
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Obtener proyecto
+        uses: actions/checkout@v4
+      - name: Preparar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Marcar versión del ejecutable
+        run: python ci_release_version.py stamp "${{ needs.version.outputs.number }}"
+      - name: Instalar dependencias
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libfuse2 libegl1 libgl1 libxkbcommon0 libxcb-cursor0 libnss3
+          python -m pip install -r requirements.txt pyinstaller
+      - name: Validar inicio de sesión y versión
+        run: |
+          python -m unittest discover -s tests -p test_microsoft_login.py -q
+      - name: Obtener appimagetool verificado
+        run: |
+          curl --fail --location --retry 3 --output appimagetool-x86_64.AppImage \
+            https://github.com/AppImage/appimagetool/releases/download/1.9.1/appimagetool-x86_64.AppImage
+          echo 'ed4ce84f0d9caff66f50bcca6ff6f35aae54ce8135408b3fa33abfc3cb384eb0  appimagetool-x86_64.AppImage' | sha256sum --check
+          chmod +x appimagetool-x86_64.AppImage
+      - name: Compilar AppImage y manifiesto
+        run: |
+          python build_linux.py --appimagetool ./appimagetool-x86_64.AppImage
+          python release_launcher_linux.py
+      - name: Probar arranque empaquetado
+        run: APPIMAGE_EXTRACT_AND_RUN=1 dist/PlanetaPanetones-*-x86_64.AppImage --self-test
+      - name: Publicar AppImage
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version=$(python -c 'from version import VERSION; print(VERSION)')
+          tag="launcher-linux-v${version}"
+          image="dist/PlanetaPanetones-${version}-x86_64.AppImage"
+          if gh release view "$tag" >/dev/null 2>&1; then
+            gh release upload "$tag" "$image" --clobber
+          else
+            gh release create "$tag" "$image" --target "${{ github.sha }}" --title "Planeta Panetones Linux ${version}" \
+              --notes "AppImage x86_64. Descarga la instancia al pulsar Jugar."
+          fi
+      - name: Guardar manifiesto de Linux
+        uses: actions/upload-artifact@v4
+        with:
+          name: launcher-manifest-linux
+          path: dist/launcher-update-linux.json
+          if-no-files-found: error
+
+  announce:
+    needs: [version, windows, linux]
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: launcher-manifest-windows
+          path: manifests/windows
+      - uses: actions/download-artifact@v4
+        with:
+          name: launcher-manifest-linux
+          path: manifests/linux
+      - name: Anunciar la nueva versión después de publicar ambos ejecutables
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          python publish_update_manifest.py manifests/windows/launcher-update.json launcher-update.json
+          python publish_update_manifest.py manifests/linux/launcher-update-linux.json launcher-update-linux.json

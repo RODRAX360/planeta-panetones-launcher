@@ -2,7 +2,7 @@
 
 Launcher de escritorio independiente para **Minecraft: Java Edition 1.20.1** y **Forge 47.4.20**. Los jugadores no necesitan tener una instancia previa en Modrinth. El launcher instala Minecraft, Java y Forge, descarga el modpack desde un hosting HTTPS y abre el juego con una cuenta Microsoft o un perfil local cuando el servidor lo acepte.
 
-> **Estado:** los manifiestos del pack están publicados en GitHub Releases. El instalador de Windows y el AppImage de Linux se generan con GitHub Actions.
+> **Estado:** los manifiestos del pack están publicados en GitHub Releases. GitHub Actions genera y publica el instalador de Windows y el AppImage de Linux cuando se publican cambios del launcher.
 
 **For Minecraft API reviewers:** this is a desktop launcher for a Forge 1.20.1 modpack. Players authenticate with their own Microsoft accounts through the system browser using OAuth 2.0 authorization code with PKCE. The application exchanges tokens directly with Microsoft, Xbox and Minecraft services to verify ownership and launch the player's licensed game. Credentials and tokens are never sent to our modpack server.
 
@@ -46,7 +46,7 @@ Al jugar, el launcher reutiliza los hashes de archivos del pack cuyo tamaño y f
 
 La integración con Discord Rich Presence usa el `discord_application_id` de la aplicación **Planeta Panetones Launcher** creada en [Discord Developer Portal](https://discord.com/developers/applications). Discord Desktop debe estar abierto y permitir compartir actividades. No se requiere un bot ni un secreto de cliente para mostrar este estado local.
 
-La tarjeta superior muestra el estado del servidor oficial, jugadores conectados y latencia mediante una consulta directa desde el equipo del jugador. `server_address` admite un dominio o una IP con puerto, como `play.ejemplo.com:25565`. Está vacío mientras no exista una dirección pública; por eso la interfaz muestra «Servidor próximamente» y no inventa un ping.
+La tarjeta superior muestra el estado del servidor oficial, jugadores conectados y latencia mediante una consulta directa desde el equipo del jugador. `server_address` admite un dominio o una IP con puerto; actualmente usa `nodo2.axolthost.com:25568`. Si el servidor no responde, la interfaz indica que no pudo consultar su estado.
 
 ## Publicar el modpack
 
@@ -67,35 +67,21 @@ El repositorio público es `RODRAX360/planeta-panetones-launcher`. El código fu
 
 La URL estable de los manifiestos es `https://raw.githubusercontent.com/RODRAX360/planeta-panetones-launcher/main`. Al pulsar **Jugar**, el launcher descarga el ZIP de la instancia elegida desde la Release, comprueba su SHA-256, instala sus archivos y conserva los mundos y preferencias. Si no cambió ningún archivo, no vuelve a descargar el ZIP. Para una versión nueva del pack, crea una nueva Release y reemplaza los manifiestos solo después de subir los ZIP nuevos. Actualmente cada cambio del pack requiere descargar el ZIP completo de esa instancia.
 
-## Instalador de Windows y actualizaciones
+## Publicar y recibir actualizaciones del launcher
 
-El instalador conserva la portada, tarjetas de instancias, iconos, fuentes y pantalla de carga del launcher. Se crea con PyInstaller y NSIS **en Windows**; este equipo Linux no produce un `.exe` nativo de Windows. Los datos del jugador se guardan en `%LOCALAPPDATA%\PlanetaPanetones`, fuera de la carpeta de instalación.
+El flujo de GitHub Actions **Publicar launcher y actualizaciones** (`.github/workflows/publicar-launcher.yml`) se ejecuta al subir cambios del código, la configuración o los recursos a `main`; también se puede iniciar manualmente. Los cambios locales todavía no publicados en GitHub no llegan a los jugadores. Los cambios solo en documentación y los manifiestos de actualización o del pack no disparan otra compilación.
 
-1. Publica los dos ZIP y los dos manifiestos como se indica arriba. Configura `server_address` cuando exista un servidor público.
-2. En Windows instala Python, NSIS y las dependencias: `py -m pip install -r requirements.txt pyinstaller pillow`.
-3. Incrementa `VERSION` en `version.py` (formato `X.Y.Z`) y ejecuta `py build_release_windows.py --base-url https://raw.githubusercontent.com/RODRAX360/planeta-panetones-launcher/main --installer-base-url https://github.com/RODRAX360/planeta-panetones-launcher/releases/download/launcher-vX.Y.Z` (sustituye `X.Y.Z` por la versión). El instalador aparecerá en `dist/PlanetaPanetones-Setup-X.Y.Z.exe`.
-4. Sube el instalador a esa Release y después publica `dist/launcher-update.json` en la raíz del repositorio. Publicar el JSON al final evita anunciar un archivo que aún no existe.
+El flujo elige automáticamente una versión posterior a las ya publicadas y la incorpora a los ejecutables durante la compilación. No hace falta cambiar `VERSION` en el código para cada lanzamiento. Compila el instalador `.exe` en Windows y el AppImage en Linux, y los sube a las Releases `launcher-vX.Y.Z` y `launcher-linux-vX.Y.Z`. Solo cuando **ambos** archivos están publicados, anuncia la versión mediante `launcher-update.json` y `launcher-update-linux.json`. Si falla alguna compilación, no se anuncian las versiones nuevas; si falla la publicación de un manifiesto, hay que corregirla y volver a ejecutar el flujo.
 
-También puedes generar el instalador y su manifiesto con una sola orden en Windows: `crear-instalador-windows.bat URL_MANIFIESTOS URL_RELEASE_INSTALADOR`. El script instala las dependencias Python de compilación, incorpora esas URL en el ejecutable y genera `dist/launcher-update.json`; NSIS debe estar instalado y `makensis.exe` disponible en el PATH. La configuración local del proyecto se restaura al terminar.
-La compilación comprueba que los dos manifiestos del pack ya respondan por HTTPS antes de crear el instalador.
+En Windows, el jugador instala el `.exe` una vez. Al volver a abrir el launcher, este consulta `launcher-update.json`; si hay una versión superior, descarga el instalador, verifica tamaño y SHA-256, lo ejecuta en modo silencioso y vuelve a abrir el launcher. No necesita buscar ni descargar manualmente otro instalador. Los datos del jugador están en `%LOCALAPPDATA%\PlanetaPanetones`, fuera de la carpeta de instalación. Si una instalación falla, el jugador puede entrar y reintentar desde el aviso del selector.
 
-En GitHub, el flujo **Compilar instalador Windows** se ejecuta al incrementar `VERSION` en `main` o manualmente. Crea la Release `launcher-vX.Y.Z` con el `.exe`, publica después `launcher-update.json` y conserva una copia en los artefactos de la ejecución.
+En Linux x86_64, el jugador descarga el AppImage, lo marca como ejecutable (`chmod +x PlanetaPanetones-*.AppImage`) y lo abre. Si el archivo está en una carpeta modificable, el launcher descarga y verifica una versión nueva, sustituye el AppImage al cerrarse y vuelve a abrirse. Si está en una ubicación de solo lectura, avisa que hay que descargar la versión nueva manualmente. Los datos están en `~/.local/share/PlanetaPanetones` o `$XDG_DATA_HOME/PlanetaPanetones`.
 
-## Linux
+El instalador y el AppImage **no incluyen las instancias**. Al pulsar **Jugar**, el launcher consulta el manifiesto de la instancia elegida y descarga Minecraft, Java, Forge y el pack cuando hace falta. Los cambios posteriores del pack llegan al volver a pulsar **Jugar**, sin publicar otro ejecutable. Para actualizar una instancia, sube sus ZIP a una Release nueva y publica sus manifiestos al final. Actualmente, si cambia un archivo del pack, se vuelve a descargar el ZIP completo de esa instancia. Los mundos, capturas, cuentas y preferencias personales permanecen en el equipo.
 
-El flujo **Compilar AppImage Linux** se ejecuta al incrementar `VERSION` o manualmente. Crea `PlanetaPanetones-X.Y.Z-x86_64.AppImage` en la Release `launcher-linux-vX.Y.Z` y publica `launcher-update-linux.json` después de subirlo. En Linux x86_64, descarga el AppImage, marca el archivo como ejecutable (`chmod +x PlanetaPanetones-*.AppImage`) y ábrelo. El modpack no está dentro: se descarga al pulsar **Jugar**. Los datos se guardan en `~/.local/share/PlanetaPanetones` o en `$XDG_DATA_HOME/PlanetaPanetones`.
+La comprobación automática requiere que el ejecutable instalado tenga configurada una URL HTTPS pública de actualización y que pueda acceder a ella. Los instaladores antiguos entregados **sin esa URL** no pueden descubrir versiones nuevas por sí solos: sus jugadores deben instalar manualmente una vez una versión que ya la incluya. A partir de esa instalación, las actualizaciones publicadas se comprueban al abrir el launcher. Una conexión fallida retrasa la actualización hasta una apertura posterior; editar archivos sin subirlos a `main` tampoco publica una versión nueva.
 
-Si el AppImage está en una carpeta que el usuario puede modificar, el launcher descarga y verifica una versión nueva, sustituye el AppImage al cerrarse y vuelve a abrirse. Si está en una carpeta de solo lectura, muestra el aviso para descargar la versión nueva manualmente.
-
-El instalador **no incluye las instancias**. Para compilarlo se requieren las URL HTTPS de ambos manifiestos; el launcher descarga Minecraft, Java, Forge y los archivos de la instancia elegida al pulsar **Jugar** por primera vez. Los siguientes arranques solo descargan los archivos nuevos o modificados. La carpeta local `publicar/` sirve para preparar y probar el pack, pero nunca se empaqueta en el `.exe`.
-
-Cuando un jugador abre **el ejecutable instalado en Windows**, la pantalla de carga consulta `launcher-update.json` antes de entrar. Si encuentra una versión superior, descarga el instalador por HTTPS, comprueba tamaño y SHA-256, cierra el proceso, ejecuta el instalador en modo silencioso y vuelve a abrirse. Si la instalación falla, puede seguir entrando y reintentarla desde el aviso del selector. Al pulsar **Jugar**, el launcher verifica el pack seleccionado y solo baja los archivos nuevos o modificados. Los mundos, capturas, cuentas y preferencias personales no se incluyen en el instalador ni se borran al actualizar. Una instancia aún no instalada se descarga al jugar por primera vez.
-
-El cargador previo a la interfaz muestra solo el logo original a color, animado, y el estado de la comprobación debajo, con un breve efecto de escritura. El resto de la ventana es transparente. En Wayland usa una superficie transparente de pantalla completa para que el contenido quede centrado; en Windows y X11 usa una ventana pequeña centrada. El resultado permanece visible durante al menos 1,6 segundos. Solo dice **«Tienes la versión más reciente»** cuando el manifiesto remoto confirma que no hay una actualización. Si falta `launcher_update_url` o falla la consulta, muestra ese estado real; durante una descarga el porcentaje se incorpora al texto.
-
-Para publicar cambios en las instancias sin cambiar el ejecutable, vuelve a generar ambos paquetes con un número de versión nuevo, sube los ZIP a una nueva Release y reemplaza los manifiestos al final. El launcher debe estar ya instalado y configurado con el hosting HTTPS para recibir esas actualizaciones. No coloques tokens ni datos privados en el hosting.
-
-Los instaladores anteriores que se entregaron **sin URL pública de actualización** no pueden descubrir una versión nueva por sí solos. Esos jugadores deben instalar manualmente una vez el primer `.exe` configurado con la URL pública. A partir de entonces, las nuevas versiones del launcher se comprueban al abrirlo y los cambios de la instancia al pulsar **Jugar**.
+El cargador previo a la interfaz muestra el logo original a color, animado, y el estado de la comprobación debajo, con un breve efecto de escritura. El resto de la ventana es transparente. En Wayland usa una superficie transparente de pantalla completa para que el contenido quede centrado; en Windows y X11 usa una ventana pequeña centrada. Solo dice **«Tienes la versión más reciente»** cuando el manifiesto remoto confirma que no hay una actualización.
 
 ## Privacidad y alcance
 
