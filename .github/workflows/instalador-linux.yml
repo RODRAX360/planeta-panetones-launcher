@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - version.py
+      - .github/workflows/instalador-linux.yml
   workflow_dispatch:
 
 permissions:
@@ -23,7 +24,7 @@ jobs:
       - name: Instalar dependencias
         run: |
           sudo apt-get update
-          sudo apt-get install -y libfuse2
+          sudo apt-get install -y libfuse2 libegl1 libgl1 libxkbcommon0 libxcb-cursor0 libnss3
           python -m pip install -r requirements.txt pyinstaller
       - name: Obtener appimagetool verificado
         run: |
