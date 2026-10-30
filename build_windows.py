@@ -2,6 +2,7 @@
 
 import argparse
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -53,6 +54,17 @@ def main() -> None:
     command.append(str(ROOT / "main.py"))
     subprocess.run(command, cwd=ROOT, check=True)
     bundle = ROOT / "dist" / "PlanetaPanetones"
+    smoke_env = os.environ.copy()
+    smoke_env["QT_QPA_PLATFORM"] = "offscreen"
+    smoke_env["QTWEBENGINE_CHROMIUM_FLAGS"] = "--no-sandbox --disable-gpu"
+    try:
+        subprocess.run([str(bundle / "PlanetaPanetones.exe"), "--ui-smoke-test"],
+                       cwd=ROOT, env=smoke_env, check=True, timeout=35)
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired):
+        log = Path(os.environ.get("LOCALAPPDATA", "")) / "PlanetaPanetones" / "logs" / "startup.log"
+        if log.is_file():
+            print(log.read_text(encoding="utf-8", errors="replace")[-8000:])
+        raise
     unexpected = [base / name for base in (bundle, bundle / "_internal")
                   for name in ("publicar", "bundled_mods", "minecraft", "instances")
                   if (base / name).exists()]

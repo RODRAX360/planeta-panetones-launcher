@@ -7,6 +7,7 @@ on:
       - version.py
       - main.py
       - launcher_updates.py
+      - build_windows.py
       - tests/test_windows_updater.py
       - .github/workflows/instalador-windows.yml
   workflow_dispatch:

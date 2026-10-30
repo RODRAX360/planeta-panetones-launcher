@@ -2,12 +2,15 @@
 """Launcher independiente de Planeta Panetones."""
 
 import json
+import faulthandler
 import math
 import os
 import subprocess
 import sys
 import threading
 import time
+import traceback
+from datetime import datetime, timezone
 from pathlib import Path
 
 from PySide6.QtCore import QObject, QPointF, QRect, QTimer, QUrl, Signal, Slot, Qt
@@ -15,7 +18,7 @@ from PySide6.QtGui import QPixmap, QImage, QPainter, QColor, QCursor, QFont, QIc
 from PySide6.QtWebChannel import QWebChannel
 from PySide6.QtWebEngineCore import QWebEngineSettings
 from PySide6.QtWebEngineWidgets import QWebEngineView
-from PySide6.QtWidgets import QApplication, QFileDialog, QMainWindow, QWidget
+from PySide6.QtWidgets import QApplication, QFileDialog, QMainWindow, QMessageBox, QWidget
 
 import standalone
 import launcher_updates
@@ -23,6 +26,38 @@ from discord_presence import DiscordPresence
 from server_status import query_server
 
 APP_DIR = standalone.APP_DIR
+STARTUP_LOG = standalone.data_dir() / "logs" / "startup.log"
+_fault_stream = None
+
+
+def startup_log(message: str) -> None:
+    try:
+        STARTUP_LOG.parent.mkdir(parents=True, exist_ok=True)
+        with STARTUP_LOG.open("a", encoding="utf-8") as stream:
+            stream.write(f"{datetime.now(timezone.utc).isoformat()} [{os.getpid()}] {message}\n")
+    except OSError:
+        pass
+
+
+def enable_startup_diagnostics() -> None:
+    global _fault_stream
+    startup_log(f"Iniciando versión {launcher_updates.VERSION}; ejecutable={sys.executable}")
+    try:
+        _fault_stream = STARTUP_LOG.open("a", encoding="utf-8")
+        faulthandler.enable(_fault_stream, all_threads=True)
+    except OSError:
+        pass
+
+    previous_hook = sys.excepthook
+
+    def log_uncaught(exc_type, exc, tb):
+        startup_log("Excepción no controlada: " + "".join(traceback.format_exception(exc_type, exc, tb)))
+        try:
+            previous_hook(exc_type, exc, tb)
+        except Exception:
+            pass
+
+    sys.excepthook = log_uncaught
 
 
 class Bridge(QObject):
@@ -362,7 +397,8 @@ class StartupSplash(QWidget):
         painter.end()
 
 
-def main(*, skip_auto_update=False) -> int:
+def main(*, skip_auto_update=False, ui_smoke_test=False) -> int:
+    enable_startup_diagnostics()
     os.environ.setdefault("QTWEBENGINE_CHROMIUM_FLAGS", "--autoplay-policy=no-user-gesture-required")
     app = QApplication(sys.argv)
     app.setApplicationName("Planeta Panetones")
@@ -376,9 +412,10 @@ def main(*, skip_auto_update=False) -> int:
             widget.move(area.x() + (area.width() - widget.width()) // 2,
                         area.y() + (area.height() - widget.height()) // 2)
 
-    presence = DiscordPresence(standalone.read_config().get("discord_application_id", ""))
-    presence.start()
-    app.aboutToQuit.connect(presence.stop)
+    if not ui_smoke_test:
+        presence = DiscordPresence(standalone.read_config().get("discord_application_id", ""))
+        presence.start()
+        app.aboutToQuit.connect(presence.stop)
     icon = QPixmap(str(APP_DIR / "assets/icono.png"))
     if not icon.isNull():
         small = icon.scaled(258, 258, Qt.AspectRatioMode.KeepAspectRatio,
@@ -472,6 +509,8 @@ def main(*, skip_auto_update=False) -> int:
     view = QWebEngineView(window)
     view.settings().setAttribute(QWebEngineSettings.WebAttribute.PlaybackRequiresUserGesture, False)
     view.settings().setAttribute(QWebEngineSettings.WebAttribute.LocalContentCanAccessFileUrls, True)
+    view.page().renderProcessTerminated.connect(
+        lambda status, code: startup_log(f"Proceso de interfaz terminado: {status}, código {code}"))
     channel = QWebChannel(view.page())
     bridge = Bridge(window, skip_auto_update=skip_auto_update)
     bridge.requestClose.connect(app.quit)
@@ -479,11 +518,13 @@ def main(*, skip_auto_update=False) -> int:
     channel.registerObject("launcher", bridge)
     view.page().setWebChannel(channel)
     window.setCentralWidget(view)
-    server_timer = QTimer(window)
-    server_timer.timeout.connect(bridge.refresh_server_status)
-    server_timer.start(30000)
-    QTimer.singleShot(500, bridge.refresh_server_status)
+    if not ui_smoke_test:
+        server_timer = QTimer(window)
+        server_timer.timeout.connect(bridge.refresh_server_status)
+        server_timer.start(30000)
+        QTimer.singleShot(500, bridge.refresh_server_status)
     ready = {"loaded": False, "delay": False, "preflight": False, "shown": False}
+    fallback = {"attempted": False}
 
     def reveal(*_args):
         if ready["shown"] or not ready["loaded"] or not ready["delay"] or not ready["preflight"]:
@@ -492,6 +533,9 @@ def main(*, skip_auto_update=False) -> int:
         splash_timer.stop()
         render_splash()
         QTimer.singleShot(110, lambda: (window.show(), splash.close()))
+        startup_log("Interfaz mostrada correctamente")
+        if ui_smoke_test:
+            QTimer.singleShot(400, app.quit)
 
     def on_preflight_finished(status: str) -> None:
         ready["preflight"] = True
@@ -538,18 +582,38 @@ def main(*, skip_auto_update=False) -> int:
 
     bridge.preflightFinished.connect(on_preflight_finished)
     bridge.event.connect(on_launcher_event)
-    QTimer.singleShot(0, bridge.check_launcher_update)
+    if ui_smoke_test:
+        QTimer.singleShot(0, lambda: bridge.preflightFinished.emit("current"))
+        QTimer.singleShot(20000, app.quit)
+    else:
+        QTimer.singleShot(0, bridge.check_launcher_update)
 
     def on_load_finished(ok: bool) -> None:
         if ok:
+            startup_log("Archivo de interfaz cargado")
             ready["loaded"] = True
             reveal()
         else:
+            startup_log(f"Falló la carga de la interfaz; URL={view.url().toString()}")
+            source = APP_DIR / "index.html"
+            if not fallback["attempted"] and source.is_file():
+                fallback["attempted"] = True
+                try:
+                    base = QUrl.fromLocalFile(str(APP_DIR.resolve()) + os.sep)
+                    view.setHtml(source.read_text(encoding="utf-8"), base)
+                    startup_log("Reintentando la interfaz desde HTML local")
+                    return
+                except (OSError, UnicodeError, ValueError) as exc:
+                    startup_log(f"Falló el reintento de interfaz: {exc}")
             splash_state.update(message="No se pudo abrir la interfaz.", mode="error", error=True,
                                 text_started=time.monotonic())
             splash_timer.stop()
             render_splash()
-            QTimer.singleShot(5000, app.quit)
+            if not ui_smoke_test:
+                QMessageBox.critical(window, "Planeta Panetones",
+                                     f"No se pudo abrir la interfaz del launcher.\n"
+                                     f"Revisa el registro y envíanoslo:\n{STARTUP_LOG}")
+            app.quit()
 
     view.loadFinished.connect(on_load_finished)
     view.load(QUrl.fromLocalFile(str(APP_DIR / "index.html")))
@@ -560,7 +624,9 @@ def main(*, skip_auto_update=False) -> int:
             render_splash()
 
     QTimer.singleShot(8000, on_loading_timeout)
-    return app.exec()
+    result = app.exec()
+    startup_log(f"Salida del launcher; código={result}; interfaz_mostrada={ready['shown']}")
+    return 0 if (not ui_smoke_test or ready["shown"]) else 1
 
 
 if __name__ == "__main__":
@@ -574,4 +640,7 @@ if __name__ == "__main__":
     skip_auto_update = "--skip-auto-update" in sys.argv
     if skip_auto_update:
         sys.argv.remove("--skip-auto-update")
-    raise SystemExit(main(skip_auto_update=skip_auto_update))
+    ui_smoke_test = "--ui-smoke-test" in sys.argv
+    if ui_smoke_test:
+        sys.argv.remove("--ui-smoke-test")
+    raise SystemExit(main(skip_auto_update=skip_auto_update, ui_smoke_test=ui_smoke_test))
