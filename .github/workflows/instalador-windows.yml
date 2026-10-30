@@ -5,6 +5,10 @@ on:
     branches: [main]
     paths:
       - version.py
+      - main.py
+      - launcher_updates.py
+      - tests/test_windows_updater.py
+      - .github/workflows/instalador-windows.yml
   workflow_dispatch:
 
 permissions:

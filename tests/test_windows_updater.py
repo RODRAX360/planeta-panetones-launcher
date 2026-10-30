@@ -19,13 +19,14 @@ class WindowsUpdaterTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             script = Path(directory) / "handoff.ps1"
             script.write_text(launcher_updates.windows_handoff_script(), encoding="utf-8")
+            escaped_path = str(script).replace("'", "''")
             command = (
                 "$tokens = $null; $errors = $null; "
-                "[System.Management.Automation.Language.Parser]::ParseFile($args[0], "
+                f"[System.Management.Automation.Language.Parser]::ParseFile('{escaped_path}', "
                 "[ref]$tokens, [ref]$errors) > $null; "
                 "if ($errors.Count -gt 0) { $errors | Write-Error; exit 1 }"
             )
-            subprocess.run(["powershell.exe", "-NoProfile", "-Command", command, str(script)],
+            subprocess.run(["powershell.exe", "-NoProfile", "-NonInteractive", "-Command", command],
                            check=True, timeout=20)
 
 
