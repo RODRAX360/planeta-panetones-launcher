@@ -1,6 +1,7 @@
 """Linux AppImage releases use their own update feed and writable executable."""
 
 import json
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
@@ -35,6 +36,26 @@ class LinuxReleaseTests(unittest.TestCase):
                 self.assertTrue(launcher_updates.can_self_update())
                 image.unlink()
                 self.assertFalse(launcher_updates.can_self_update())
+
+    def test_linux_update_replaces_appimage_after_exit(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            target = root / "launcher.AppImage"
+            downloaded = root / "download.AppImage"
+            target.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+            downloaded.write_text("#!/bin/sh\nexit 0\n# nueva version\n", encoding="utf-8")
+            with patch.object(launcher_updates.sys, "platform", "linux"), \
+                    patch.object(launcher_updates.sys, "frozen", True, create=True), \
+                    patch.dict(launcher_updates.os.environ, {"APPIMAGE": str(target)}), \
+                    patch.object(launcher_updates, "data_dir", return_value=root), \
+                    patch.object(launcher_updates.subprocess, "Popen"):
+                (root / "updates").mkdir()
+                launcher_updates.start_installer_after_exit(downloaded)
+            script = root / "updates/install-after-exit.sh"
+            subprocess.run(["/bin/sh", str(script), "999999999", str(downloaded), str(target)],
+                           check=True, timeout=5)
+            self.assertEqual(target.read_bytes(), downloaded.read_bytes())
+            self.assertTrue(target.stat().st_mode & 0o111)
 
 
 if __name__ == "__main__":
