@@ -114,6 +114,8 @@ function renderServer(status) {
   const line = $('server-line');
   const dot = $('server-dot');
   const ping = $('server-ping');
+  const address = status?.address || '';
+  $('server-status').title = address;
   dot.className = 'server-light';
   if (!status?.configured) {
     line.textContent = 'Servidor próximamente';
@@ -123,7 +125,7 @@ function renderServer(status) {
     line.textContent = 'Servidor sin conexión';
     dot.classList.add('offline');
     ping.textContent = 'Ping —';
-    $('server-detail').textContent = 'El servidor no responde en este momento.';
+    $('server-detail').textContent = address + ' · ' + (status.message || 'El servidor no responde en este momento.');
   } else {
     const players = status.players ?? 0;
     const maximum = status.maximum ?? '—';
@@ -131,7 +133,7 @@ function renderServer(status) {
     line.textContent = players + '/' + maximum + ' jugadores';
     dot.classList.add('online');
     ping.textContent = 'Ping ' + latency + ' ms';
-    $('server-detail').textContent = players + ' jugadores conectados · ping ' + latency + ' ms.';
+    $('server-detail').textContent = address + ' · ' + players + ' jugadores conectados · ping ' + latency + ' ms.';
   }
 }
 
