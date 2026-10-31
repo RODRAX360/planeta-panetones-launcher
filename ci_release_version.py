@@ -1,7 +1,9 @@
 """Choose one new launcher version for both release jobs in GitHub Actions.
 
-``prepare`` reads the source version, published launcher releases, and both
-update feeds. ``stamp`` changes only the temporary CI checkout before building.
+``prepare`` reads the source version, both update feeds, and historical release
+tags. The public ``launcher`` release stays at one URL and its tag has no
+version; only the feeds need an increasing internal version. ``stamp`` changes
+only the temporary CI checkout before building.
 """
 
 import argparse
@@ -19,7 +21,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 VERSION_FILE = ROOT / "version.py"
 VERSION_PATTERN = re.compile(r"(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\Z")
-RELEASE_TAG_PATTERN = re.compile(r"launcher(?:-linux)?-v([0-9]+\.[0-9]+\.[0-9]+)\Z")
+LEGACY_RELEASE_TAG_PATTERN = re.compile(r"launcher(?:-linux)?-v([0-9]+\.[0-9]+\.[0-9]+)\Z")
 REPOSITORY_PATTERN = re.compile(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+\Z")
 FEEDS = ("launcher-update.json", "launcher-update-linux.json")
 
@@ -95,7 +97,7 @@ def published_versions(repository: str, token: str) -> list[tuple[int, int, int]
         for release in releases:
             if not isinstance(release, dict):
                 continue
-            match = RELEASE_TAG_PATTERN.fullmatch(str(release.get("tag_name", "")))
+            match = LEGACY_RELEASE_TAG_PATTERN.fullmatch(str(release.get("tag_name", "")))
             if match:
                 versions.append(version_parts(match.group(1)))
         if len(releases) < 100:

@@ -137,7 +137,7 @@ def inspect_update(manifest_url: str, *, install_supported: bool) -> dict:
         }
     return {
         "status": "available",
-        "message": f"Actualización {update['version']} disponible.",
+        "message": "Hay una actualización del launcher disponible.",
         "version": VERSION,
         "availableVersion": update["version"],
         "update": update,

@@ -148,14 +148,14 @@ function renderUpdateStatus(status, state) {
   if (status?.message) {
     detail.textContent = status.message;
   } else if (state.launcherUpdateConfigured) {
-    detail.textContent = 'Versión ' + (state.launcherVersion || '—') + '. Se comprueba al iniciar.';
+    detail.textContent = 'Se comprueban las actualizaciones al iniciar.';
   } else {
-    detail.textContent = 'Versión ' + (state.launcherVersion || '—') + '. No hay fuente de actualización configurada.';
+    detail.textContent = 'No hay una fuente de actualización configurada.';
   }
   const banner = $('update-banner');
   if (banner) {
     banner.hidden = status?.status !== 'available';
-    if (!banner.hidden) banner.textContent = 'Versión ' + status.availableVersion + ' disponible. Actualizar launcher →';
+    if (!banner.hidden) banner.textContent = 'Actualización disponible. Actualizar launcher →';
   }
 }
 

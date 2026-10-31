@@ -159,7 +159,7 @@ class Bridge(QObject):
             return False
         try:
             self._emit("busy", busy=True)
-            self._emit("status", text=f"Actualizando launcher a {self._launcher_update['version']}…")
+            self._emit("status", text="Actualizando launcher…")
             installer = launcher_updates.download_installer(
                 self._launcher_update,
                 lambda value, maximum: self._emit("progress", value=value, max=maximum),

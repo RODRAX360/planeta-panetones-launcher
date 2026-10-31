@@ -59,34 +59,21 @@ jobs:
         run: |
           python -m unittest discover -s tests -p test_windows_updater.py -q
           python -m unittest discover -s tests -p test_microsoft_login.py -q
+          python -m unittest discover -s tests -p test_stable_release.py -q
       - name: Compilar instalador y manifiesto
         shell: pwsh
         run: |
-          $version = python -c "from version import VERSION; print(VERSION)"
           $base = "https://raw.githubusercontent.com/${{ github.repository }}/main"
-          $installer = "https://github.com/${{ github.repository }}/releases/download/launcher-v$version"
+          $installer = "https://github.com/${{ github.repository }}/releases/download/launcher"
           python build_release_windows.py --base-url $base --installer-base-url $installer
-      - name: Publicar instalador
-        shell: pwsh
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          $PSNativeCommandUseErrorActionPreference = $false
-          $version = python -c "from version import VERSION; print(VERSION)"
-          $tag = "launcher-v$version"
-          $exe = "dist/PlanetaPanetones-Setup-$version.exe"
-          gh release view $tag *> $null
-          if ($LASTEXITCODE -eq 0) {
-            gh release upload $tag $exe --clobber
-          } else {
-            gh release create $tag $exe --target "${{ github.sha }}" --title "Planeta Panetones $version" --notes "Instalador ligero para Windows. Las instancias se descargan al pulsar Jugar."
-          }
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-      - name: Guardar manifiesto de Windows
+      - name: Guardar instalador y manifiesto de Windows
         uses: actions/upload-artifact@v4
         with:
-          name: launcher-manifest-windows
-          path: dist/launcher-update.json
+          name: launcher-build-windows
+          path: |
+            dist/PlanetaPanetones-Setup.exe
+            dist/launcher-update.json
+          compression-level: 0
           if-no-files-found: error
 
   linux:
@@ -109,6 +96,7 @@ jobs:
       - name: Validar inicio de sesión y versión
         run: |
           python -m unittest discover -s tests -p test_microsoft_login.py -q
+          python -m unittest discover -s tests -p test_stable_release.py -q
       - name: Obtener appimagetool verificado
         run: |
           curl --fail --location --retry 3 --output appimagetool-x86_64.AppImage \
@@ -121,42 +109,103 @@ jobs:
           python release_launcher_linux.py
       - name: Probar arranque empaquetado
         run: APPIMAGE_EXTRACT_AND_RUN=1 dist/PlanetaPanetones-*-x86_64.AppImage --self-test
-      - name: Publicar AppImage
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          version=$(python -c 'from version import VERSION; print(VERSION)')
-          tag="launcher-linux-v${version}"
-          image="dist/PlanetaPanetones-${version}-x86_64.AppImage"
-          if gh release view "$tag" >/dev/null 2>&1; then
-            gh release upload "$tag" "$image" --clobber
-          else
-            gh release create "$tag" "$image" --target "${{ github.sha }}" --title "Planeta Panetones Linux ${version}" \
-              --notes "AppImage x86_64. Descarga la instancia al pulsar Jugar."
-          fi
-      - name: Guardar manifiesto de Linux
+      - name: Guardar AppImage y manifiesto de Linux
         uses: actions/upload-artifact@v4
         with:
-          name: launcher-manifest-linux
-          path: dist/launcher-update-linux.json
+          name: launcher-build-linux
+          path: |
+            dist/PlanetaPanetones-x86_64.AppImage
+            dist/launcher-update-linux.json
+          compression-level: 0
           if-no-files-found: error
 
-  announce:
+  promote:
     needs: [version, windows, linux]
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
-          name: launcher-manifest-windows
-          path: manifests/windows
+          name: launcher-build-windows
+          path: artifacts/windows
       - uses: actions/download-artifact@v4
         with:
-          name: launcher-manifest-linux
-          path: manifests/linux
-      - name: Anunciar la nueva versión después de publicar ambos ejecutables
+          name: launcher-build-linux
+          path: artifacts/linux
+      - name: Validar artefactos y evitar sobrescribir una actualización posterior
+        id: preflight
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_VERSION: ${{ needs.version.outputs.number }}
+        run: |
+          python - <<'PY'
+          import hashlib
+          import json
+          import os
+          import subprocess
+          from pathlib import Path
+          from ci_release_version import published_versions, version_parts
+
+          repository = os.environ['GITHUB_REPOSITORY']
+          version = os.environ['RELEASE_VERSION']
+          base = f'https://github.com/{repository}/releases/download/launcher/'
+          for platform, filename, manifest_name in (
+              ('windows', 'PlanetaPanetones-Setup.exe', 'launcher-update.json'),
+              ('linux', 'PlanetaPanetones-x86_64.AppImage', 'launcher-update-linux.json'),
+          ):
+              directory = Path('artifacts') / platform
+              binary = directory / filename
+              manifest = json.loads((directory / manifest_name).read_text(encoding='utf-8'))
+              expected = manifest['installer']
+              if manifest['version'] != version or expected['url'] != base + filename:
+                  raise SystemExit(f'Manifiesto inesperado: {manifest_name}')
+              if expected['size'] != binary.stat().st_size:
+                  raise SystemExit(f'Tamaño distinto: {filename}')
+              digest = hashlib.sha256()
+              with binary.open('rb') as stream:
+                  for chunk in iter(lambda: stream.read(1024 * 1024), b''):
+                      digest.update(chunk)
+              if expected['sha256'] != digest.hexdigest():
+                  raise SystemExit(f'Hash distinto: {filename}')
+          newer = any(published > version_parts(version)
+                      for published in published_versions(repository, os.environ['GH_TOKEN']))
+          remote_head = subprocess.check_output(
+              ['git', 'ls-remote', 'origin', 'refs/heads/main'], text=True,
+          ).split()[0]
+          stale_source = remote_head != os.environ['GITHUB_SHA']
+          with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8') as output:
+              output.write(f'skip={str(newer or stale_source).lower()}\n')
+          if newer or stale_source:
+              print('Esta ejecución ya no corresponde al código actual; se conserva el launcher publicado.')
+          PY
+      - name: Crear la única descarga pública si aún no existe
+        if: steps.preflight.outputs.skip != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if ! gh release view launcher >/dev/null 2>&1; then
+            gh release create launcher --target "${{ github.sha }}" \
+              --title 'Planeta Panetones' --latest \
+              --notes 'Descarga el launcher una vez. Al abrirlo, buscará actualizaciones automáticamente. Las instancias se sincronizan al pulsar Jugar.'
+          fi
+          gh release edit launcher --latest
+      - name: Publicar instalador de Windows
+        if: steps.preflight.outputs.skip != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload launcher artifacts/windows/PlanetaPanetones-Setup.exe --clobber
+      - name: Anunciar actualización de Windows
+        if: steps.preflight.outputs.skip != 'true'
         env:
           GITHUB_TOKEN: ${{ github.token }}
-        run: |
-          python publish_update_manifest.py manifests/windows/launcher-update.json launcher-update.json
-          python publish_update_manifest.py manifests/linux/launcher-update-linux.json launcher-update-linux.json
+        run: python publish_update_manifest.py artifacts/windows/launcher-update.json launcher-update.json
+      - name: Publicar AppImage de Linux
+        if: steps.preflight.outputs.skip != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload launcher artifacts/linux/PlanetaPanetones-x86_64.AppImage --clobber
+      - name: Anunciar actualización de Linux
+        if: steps.preflight.outputs.skip != 'true'
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python publish_update_manifest.py artifacts/linux/launcher-update-linux.json launcher-update-linux.json

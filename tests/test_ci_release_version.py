@@ -19,6 +19,21 @@ def encoded_manifest(version: str) -> dict:
 
 
 class ReleaseVersionTests(unittest.TestCase):
+    def test_stable_release_uses_feed_versions_without_new_versioned_tags(self):
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory) / "version.py"
+            source.write_text('VERSION = "1.0.6"\n', encoding="utf-8")
+
+            def github_response(url: str, _token: str):
+                if "/releases?" in url:
+                    return [{"tag_name": "launcher"}]
+                if "/contents/launcher-update-linux.json" in url:
+                    return encoded_manifest("1.0.11")
+                return encoded_manifest("1.0.12")
+
+            with patch.object(release_version, "_github_json", side_effect=github_response):
+                self.assertEqual(release_version.next_release_version("owner/repo", "token", source), "1.0.13")
+
     def test_next_version_uses_highest_release_or_feed_after_partial_release(self):
         with tempfile.TemporaryDirectory() as directory:
             source = Path(directory) / "version.py"
@@ -26,7 +41,8 @@ class ReleaseVersionTests(unittest.TestCase):
 
             def github_response(url: str, _token: str):
                 if "/releases?" in url:
-                    return [{"tag_name": "launcher-v1.0.8"},
+                    return [{"tag_name": "launcher"},
+                            {"tag_name": "launcher-v1.0.8"},
                             {"tag_name": "launcher-linux-v1.0.7"},
                             {"tag_name": "pack-2026.10.2"}]
                 if "/contents/launcher-update-linux.json" in url:
