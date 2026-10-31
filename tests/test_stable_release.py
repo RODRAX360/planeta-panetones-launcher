@@ -53,7 +53,8 @@ class StableReleaseTests(unittest.TestCase):
             stable = root / "dist/PlanetaPanetones-x86_64.AppImage"
             manifest = json.loads((root / "dist/launcher-update-linux.json").read_text(encoding="utf-8"))
             self.assertEqual(stable.read_bytes(), built.read_bytes())
-            self.assertTrue(stable.stat().st_mode & 0o111)
+            if sys.platform != "win32":
+                self.assertTrue(stable.stat().st_mode & 0o111)
             self.assertEqual(manifest["version"], "1.0.8")
             self.assertEqual(manifest["installer"], {
                 "url": "https://github.com/RODRAX360/planeta-panetones-launcher/"
