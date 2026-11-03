@@ -14,6 +14,7 @@ ROOT = Path(__file__).resolve().parent
 DEFAULT_DEST = ROOT / "publicar"
 EXTRA_MODS = ROOT / "bundled_mods"
 FOLDERS = ("mods", "config", "defaultconfigs", "resourcepacks", "shaderpacks", "emotes", "customnpcs")
+LOCAL_ONLY_RESOURCE_PACKS = {"Fluid & Foolish 1.0-hotfix.zip"}
 
 
 def included(path: Path) -> bool:
@@ -25,6 +26,8 @@ def included(path: Path) -> bool:
         return False
     if parts[0] == "mods":
         return len(parts) == 2 and path.suffix.lower() == ".jar"
+    if parts[0] == "resourcepacks" and path.name in LOCAL_ONLY_RESOURCE_PACKS:
+        return False
     if parts[0] == "config" and ("cubosu_server" in parts or path.name in
             {"player-volumes.properties", "voicechat-server.properties", "watut-server.toml"}):
         return False

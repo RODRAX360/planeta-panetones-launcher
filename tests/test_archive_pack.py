@@ -22,6 +22,29 @@ class _Response(io.BytesIO):
 
 
 class ArchivePackTests(unittest.TestCase):
+    def test_upgrade_removes_old_managed_mod_after_new_version_is_verified(self):
+        old_data = b"old mod"
+        new_data = b"new mod"
+        old_file = {"path": "mods/example-1.0.jar", "size": len(old_data),
+                    "sha256": hashlib.sha256(old_data).hexdigest()}
+        new_file = {"path": "mods/example-2.0.jar", "size": len(new_data),
+                    "sha256": hashlib.sha256(new_data).hexdigest()}
+        with tempfile.TemporaryDirectory() as temporary:
+            game = Path(temporary)
+            (game / "mods").mkdir()
+            (game / old_file["path"]).write_bytes(old_data)
+            (game / new_file["path"]).write_bytes(new_data)
+            (game / ".planeta-panetones-manifest.json").write_text(
+                json.dumps({"files": [old_file]}), encoding="utf-8")
+            manifest = {"schema": 1, "edition": "principal", "minecraft": "1.20.1",
+                        "forge": "47.4.20", "files": [new_file]}
+            manifest_path = game / "new-manifest.json"
+            manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+            sync_pack(manifest_path.as_uri(), game, lambda *_args: None,
+                      expected_edition="principal")
+            self.assertFalse((game / old_file["path"]).exists())
+            self.assertEqual((game / new_file["path"]).read_bytes(), new_data)
+
     def test_downloads_on_first_play_and_reuses_installed_file(self):
         data = b"forge mod data"
         archive_io = io.BytesIO()

@@ -10,33 +10,33 @@ from pathlib import Path
 
 from publish_pack import SOURCE, ROOT, EXTRA_MODS, copy_and_hash, included
 
-# Son complementos visuales, de emotes o de interfaz. Los mods de contenido,
-# rendimiento y sus dependencias obligatorias permanecen en la variante ligera.
+# Son complementos visuales, de emotes o de interfaz que no están en el servidor.
+# Los mods instalados en el servidor se conservan para que la variante pueda entrar.
 OPTIONAL_MOD_IDS = {
-    "advancementplaques", "animatedhearts", "cinematic", "emojiful",
+    "advancementplaques", "animatedhearts", "emojiful",
     "immersiveui", "resourcify", "shouldersurfing", "sounds",
-    "subtle_effects", "customskyboxes", "chatanimation", "eatinganimation",
+    "customskyboxes", "chatanimation", "eatinganimation",
     "entity_model_features", "entity_texture_features", "epicdeathscreen",
-    "explosiveenhancement", "holdmyitems", "immersivehotbar",
+    "holdmyitems", "immersivehotbar",
     "notenoughanimations", "obscure_tooltips", "oculus", "particlerain",
-    "particular", "skinlayers3d", "smoothswapping", "sodiumdynamiclights",
-    "sodiumoptionsapi", "spatial_gui", "visuality", "watervision",
+    "skinlayers3d", "smoothswapping", "sodiumdynamiclights",
+    "sodiumoptionsapi", "spatial_gui", "visuality",
     "emotecraft", "emotecraft_borrow_their_emote",
     "emotecraft_fix_animate_texture", "stretch_emotecraft_compat",
-    "cpm", "bendy_customnpcs_compat", "bendylib", "ruletahud", "gml",
-    "mru", "mossylib", "iceberg", "fzzy_config",
-    "yet_another_config_lib_v3", "watermedia_youtube_plugin", "chunky",
+    "bendy_customnpcs_compat", "bendylib", "gml",
+    "mru", "mossylib", "iceberg",
+    "yet_another_config_lib_v3", "watermedia_youtube_plugin",
 }
 
 SKIP_CONFIG_PREFIXES = (
     "cubosu", "advancementplaques", "animatedhearts", "animation_overhaul",
-    "betterthirdperson", "chat_heads", "chatanimation", "cinematic", "customskyboxes",
-    "emojiful", "emotecraft", "entity_model_features", "entity_texture_features",
-    "etf_warnings", "explosiveenhancement", "fzzy_config", "gml-script",
+    "betterthirdperson", "chat_heads", "chatanimation", "customskyboxes",
+    "emojiful", "entity_model_features", "entity_texture_features",
+    "etf_warnings", "gml-script",
     "holdmyitems", "immersive-hotbar", "immersiveui", "notenoughanimations",
-    "obscure", "oculus", "particlerain", "particular", "resourcify",
+    "obscure", "oculus", "particlerain", "resourcify",
     "shouldersurfing", "skinlayers", "smoothswapping", "sodiumdynamiclights",
-    "sounds", "spatial-gui", "subtle_effects", "visuality", "watervision",
+    "sounds", "spatial-gui", "visuality",
     "yacl", "epicdeathscreen", "fml.toml.before", "gachaaddiction_lootr_seen",
 )
 
