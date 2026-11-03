@@ -26,30 +26,31 @@ def failed_update_marker(version: str) -> Path:
 
 def windows_handoff_script() -> str:
     """Keep a failed installation from leaving the user without a launcher."""
-    return (
-        "param([int]$ParentPid, [string]$Installer, [string]$Launcher, "
-        "[string]$ReadyFile, [string]$FailedFile, [string]$LogFile)\n"
-        "$ErrorActionPreference = 'Stop'\n"
-        "function Write-UpdateLog([string]$Message) {\n"
-        "  Add-Content -Path $LogFile -Value \"$(Get-Date -Format o) $Message\" -Encoding UTF8\n"
-        "}\n"
-        "try {\n"
-        "  Set-Content -Path $ReadyFile -Value 'ready' -Encoding ASCII\n"
-        "  Wait-Process -Id $ParentPid -ErrorAction SilentlyContinue\n"
-        "  Start-Sleep -Milliseconds 500\n"
-        "  $process = Start-Process -FilePath $Installer -ArgumentList '/S' -PassThru -Wait -ErrorAction Stop\n"
-        "  if ($process.ExitCode -ne 0) { throw \"Instalador terminó con código $($process.ExitCode)\" }\n"
-        "  Remove-Item -Path $FailedFile -ErrorAction SilentlyContinue\n"
-        "  Write-UpdateLog 'Instalación completada'\n"
-        "} catch {\n"
-        "  Set-Content -Path $FailedFile -Value ($_.Exception.Message) -Encoding UTF8\n"
-        "  Write-UpdateLog \"Instalación fallida: $($_.Exception.Message)\"\n"
-        "} finally {\n"
-        "  try {\n"
-        "    Start-Process -FilePath $Launcher -ArgumentList '--skip-auto-update' -ErrorAction Stop\n"
-        "  } catch { Write-UpdateLog \"No se pudo reabrir: $($_.Exception.Message)\" }\n"
-        "}\n"
-    )
+    return "\r\n".join((
+        "@echo off",
+        "setlocal DisableDelayedExpansion",
+        '>>"%PP_UPDATE_LOG%" echo Inicio de actualizacion',
+        '>"%PP_UPDATE_READY%" echo ready',
+        "if errorlevel 1 exit /b 1",
+        ":wait_parent",
+        'tasklist /FI "PID eq %PP_UPDATE_PARENT_PID%" /NH 2>nul | findstr /R /C:"[ ]%PP_UPDATE_PARENT_PID%[ ]" >nul',
+        "if not errorlevel 1 (",
+        "  ping -n 2 127.0.0.1 >nul",
+        "  goto wait_parent",
+        ")",
+        "ping -n 2 127.0.0.1 >nul",
+        'start "" /WAIT "%PP_UPDATE_INSTALLER%" /S',
+        'set "InstallResult=%errorlevel%"',
+        'if "%InstallResult%"=="0" (',
+        '  if exist "%PP_UPDATE_FAILED%" del /F /Q "%PP_UPDATE_FAILED%" >nul 2>nul',
+        '  >>"%PP_UPDATE_LOG%" echo Instalacion completada',
+        ") else (",
+        '  >"%PP_UPDATE_FAILED%" echo Instalador termino con codigo %InstallResult%',
+        '  >>"%PP_UPDATE_LOG%" echo Instalacion fallida: %InstallResult%',
+        ")",
+        'start "" "%PP_UPDATE_LAUNCHER%" --skip-auto-update',
+        'if errorlevel 1 >>"%PP_UPDATE_LOG%" echo No se pudo reabrir el launcher',
+    )) + "\r\n"
 
 
 def can_self_update() -> bool:
@@ -213,20 +214,28 @@ def start_installer_after_exit(installer: Path) -> None:
         raise RuntimeError("La actualización automática requiere un instalador de Windows o AppImage modificable.")
     directory = data_dir() / "updates"
     directory.mkdir(parents=True, exist_ok=True)
-    script = directory / "install-after-exit.ps1"
+    script = directory / "install-after-exit.cmd"
     ready = directory / "install-ready.txt"
     version = installer.name.removeprefix("PlanetaPanetones-Setup-").removesuffix(".exe")
     failed = failed_update_marker(version)
     log = directory / "update.log"
     ready.unlink(missing_ok=True)
-    script.write_text(windows_handoff_script(), encoding="utf-8")
+    script.write_bytes(windows_handoff_script().encode("ascii"))
+    handoff_env = os.environ.copy()
+    handoff_env.update({
+        "PP_UPDATE_PARENT_PID": str(os.getpid()),
+        "PP_UPDATE_INSTALLER": str(installer),
+        "PP_UPDATE_LAUNCHER": str(Path(sys.executable).resolve()),
+        "PP_UPDATE_READY": str(ready),
+        "PP_UPDATE_FAILED": str(failed),
+        "PP_UPDATE_LOG": str(log),
+    })
     process = subprocess.Popen(
-        ["powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(script),
-         str(os.getpid()), str(installer), str(Path(sys.executable).resolve()), str(ready), str(failed), str(log)],
-        creationflags=subprocess.CREATE_NEW_PROCESS_GROUP | subprocess.DETACHED_PROCESS,
-        close_fds=True,
+        ["cmd.exe", "/D", "/V:OFF", "/C", "call", str(script)],
+        creationflags=subprocess.CREATE_NEW_PROCESS_GROUP | subprocess.CREATE_NO_WINDOW,
+        close_fds=True, env=handoff_env,
     )
-    deadline = time.monotonic() + 5
+    deadline = time.monotonic() + 15
     while time.monotonic() < deadline:
         if ready.is_file():
             return
@@ -235,4 +244,4 @@ def start_installer_after_exit(installer: Path) -> None:
         time.sleep(0.05)
     if process.poll() is None:
         process.terminate()
-    raise RuntimeError("No se pudo iniciar el instalador. El launcher permanecerá abierto.")
+    raise RuntimeError(f"No se pudo iniciar el instalador. Revisa {log}. El launcher permanecerá abierto.")
