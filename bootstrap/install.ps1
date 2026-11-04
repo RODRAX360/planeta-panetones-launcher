@@ -35,7 +35,14 @@ try {
     if ($actualSize -ne $expectedSize) {
         throw "Tamaño del instalador inválido: $actualSize"
     }
-    $actualHash = (Get-FileHash -LiteralPath $OutFile -Algorithm SHA256).Hash.ToLowerInvariant()
+    $sha256 = [System.Security.Cryptography.SHA256]::Create()
+    $stream = [System.IO.File]::OpenRead($OutFile)
+    try {
+        $actualHash = [System.BitConverter]::ToString($sha256.ComputeHash($stream)).Replace('-', '').ToLowerInvariant()
+    } finally {
+        $stream.Dispose()
+        $sha256.Dispose()
+    }
     if ($actualHash -ne $expectedSha256) {
         throw "SHA-256 del instalador inválido: $actualHash"
     }
