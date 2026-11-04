@@ -660,6 +660,10 @@ def launch_game(account: dict, game: Path, java: str, instance_id: str | None = 
         if not 640 <= width <= 7680 or not 360 <= height <= 4320:
             raise ValueError("La resolución guardada no es válida.")
         options.update(customResolution=True, resolutionWidth=str(width), resolutionHeight=str(height))
+    if sys.platform == "win32":
+        # Java's bundled cacerts is separate from Windows; use the same trusted
+        # roots as the launcher for Minecraft's authenticated HTTPS requests.
+        options["jvmArguments"].append("-Djavax.net.ssl.trustStoreType=Windows-ROOT")
     command = mll.command.get_minecraft_command(FORGE_ID, game, options)
     log_path = instance_dir / "logs" / "launcher-java.log"
     log_path.parent.mkdir(parents=True, exist_ok=True)
