@@ -15,7 +15,9 @@ jobs:
       - name: Ejecutar el mismo rescate que recibirá el launcher antiguo
         shell: pwsh
         run: |
+          $env:PP_UPDATE_LOG = Join-Path $env:RUNNER_TEMP 'rescue.log'
           $process = Start-Process -FilePath '.\bootstrap\PlanetaPanetones-Rescate.exe' -ArgumentList '/S' -PassThru -Wait
+          if (Test-Path -LiteralPath $env:PP_UPDATE_LOG) { Get-Content -LiteralPath $env:PP_UPDATE_LOG }
           if ($process.ExitCode -ne 0) { throw "Rescate falló con código $($process.ExitCode)" }
           $installed = Join-Path $env:LOCALAPPDATA 'Programs\PlanetaPanetones\PlanetaPanetones.exe'
           if (-not (Test-Path -LiteralPath $installed)) { throw 'El launcher no quedó instalado' }
