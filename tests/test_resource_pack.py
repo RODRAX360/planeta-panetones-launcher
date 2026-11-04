@@ -6,8 +6,10 @@ from pathlib import Path
 
 from resource_pack import (
     ANIMATION_PACK_NAME,
+    COMPATIBLE_PACK_NAME,
     SETTINGS_PACK_NAME,
     _activate_packs,
+    _write_compatible_pack,
     _write_settings_pack,
 )
 
@@ -30,8 +32,35 @@ class ResourcePackTests(unittest.TestCase):
             packs = json.loads(next(line.partition(":")[2] for line in once.splitlines()
                                     if line.startswith("resourcePacks:")))
             self.assertEqual(packs, ["vanilla", "file/Other.zip",
-                                     "file/" + ANIMATION_PACK_NAME,
+                                     "file/" + COMPATIBLE_PACK_NAME,
                                      "file/" + SETTINGS_PACK_NAME])
+
+    def test_local_compatibility_copy_keeps_animations_and_fixes_invalid_fields(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            source = Path(temporary) / ANIMATION_PACK_NAME
+            target = Path(temporary) / COMPATIBLE_PACK_NAME
+            original = {
+                "item_groups": {
+                    "TRIDENT": {"animations": {"idle": {"animation": "trident_idle", "base_pose_retain": True}}},
+                    "SHIELD": {"animations": {"use_item": {"animation": "shield_use", "base_pose_retain": True}}},
+                },
+                "defaults": {"animations": {"idle_events": {"variants": []}}},
+            }
+            with zipfile.ZipFile(source, "w") as archive:
+                archive.writestr("pack.mcmeta", "{}")
+                archive.writestr("assets/punchy_moves/compat/develop.json", json.dumps(original))
+                archive.writestr("assets/punchy_moves/animations/keep.json", "{}")
+            _write_compatible_pack(source, target)
+            with zipfile.ZipFile(target) as archive:
+                data = json.loads(archive.read("assets/punchy_moves/compat/develop.json"))
+                self.assertIn("assets/punchy_moves/animations/keep.json", archive.namelist())
+                self.assertEqual(data["item_groups"]["TRIDENT"]["animations"]["idle"],
+                                 {"animation": "trident_idle"})
+                self.assertEqual(data["item_groups"]["SHIELD"]["animations"]["use_item"],
+                                 {"animation": "shield_use"})
+                self.assertTrue(data["defaults"]["animations"]["idle_events"]["variants"])
+            with zipfile.ZipFile(source) as archive:
+                self.assertEqual(json.loads(archive.read("assets/punchy_moves/compat/develop.json")), original)
 
     def test_settings_pack_disables_only_random_idle_events(self):
         with tempfile.TemporaryDirectory() as temporary:

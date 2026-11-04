@@ -11,6 +11,7 @@ from pathlib import Path
 # The creator does not permit redistribution. Download this pinned public release
 # directly from Modrinth for each player; never put it in our modpack archives.
 ANIMATION_PACK_NAME = "Fluid & Foolish 1.0.1.zip"
+COMPATIBLE_PACK_NAME = "Fluid & Foolish 1.0.1-Planeta-Compat.zip"
 ANIMATION_PACK_URL = (
     "https://cdn.modrinth.com/data/fQdwNxte/versions/UAp4jRDk/"
     "Fluid%20%26%20Foolish%201.0.1.zip"
@@ -84,6 +85,28 @@ def _write_settings_pack(destination: Path) -> None:
         temporary.unlink(missing_ok=True)
 
 
+def _write_compatible_pack(source: Path, destination: Path) -> None:
+    """Fix only invalid Punchy Moves metadata in a local copy of the creator's pack."""
+    temporary = destination.with_name(destination.name + ".part")
+    try:
+        with zipfile.ZipFile(source) as original, zipfile.ZipFile(temporary, "w") as patched:
+            for info in original.infolist():
+                content = original.read(info.filename)
+                if info.filename == "assets/punchy_moves/compat/develop.json":
+                    data = json.loads(content)
+                    for group, animation in (("TRIDENT", "idle"), ("SHIELD", "use_item")):
+                        data.get("item_groups", {}).get(group, {}).get("animations", {}).get(animation, {}).pop(
+                            "base_pose_retain", None)
+                    idle = data.get("defaults", {}).get("animations", {}).get("idle_events", {})
+                    if not idle.get("variants"):
+                        idle["variants"] = ["idle_event_one_backup", "idle_event_two_backup"]
+                    content = json.dumps(data, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+                patched.writestr(info, content)
+        temporary.replace(destination)
+    finally:
+        temporary.unlink(missing_ok=True)
+
+
 def _activate_packs(options_path: Path) -> None:
     raw = options_path.read_text(encoding="utf-8") if options_path.is_file() else ""
     lines = raw.splitlines()
@@ -101,7 +124,7 @@ def _activate_packs(options_path: Path) -> None:
         item.startswith("file/Fluid & Foolish ") or
         item == "file/" + SETTINGS_PACK_NAME
     )]
-    selected.extend(("file/" + ANIMATION_PACK_NAME, "file/" + SETTINGS_PACK_NAME))
+    selected.extend(("file/" + COMPATIBLE_PACK_NAME, "file/" + SETTINGS_PACK_NAME))
     entry = "resourcePacks:" + json.dumps(selected, ensure_ascii=True, separators=(",", ":"))
     if index is None:
         lines.append(entry)
@@ -121,5 +144,6 @@ def ensure_animation_pack(game_dir: Path) -> None:
     folder = game_dir / "resourcepacks"
     folder.mkdir(parents=True, exist_ok=True)
     _download_official_pack(folder / ANIMATION_PACK_NAME)
+    _write_compatible_pack(folder / ANIMATION_PACK_NAME, folder / COMPATIBLE_PACK_NAME)
     _write_settings_pack(folder / SETTINGS_PACK_NAME)
     _activate_packs(game_dir / "options.txt")

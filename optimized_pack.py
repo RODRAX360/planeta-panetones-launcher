@@ -13,7 +13,7 @@ from publish_pack import SOURCE, ROOT, EXTRA_MODS, copy_and_hash, included
 # Son complementos visuales, de emotes o de interfaz que no están en el servidor.
 # Los mods instalados en el servidor se conservan para que la variante pueda entrar.
 OPTIONAL_MOD_IDS = {
-    "advancementplaques", "animatedhearts", "emojiful",
+    "advancementplaques", "animatedhearts",
     "immersiveui", "resourcify", "shouldersurfing", "sounds",
     "customskyboxes", "chatanimation", "eatinganimation",
     "entity_model_features", "entity_texture_features", "epicdeathscreen",
