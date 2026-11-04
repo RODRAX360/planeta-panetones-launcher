@@ -661,7 +661,17 @@ def launch_game(account: dict, game: Path, java: str, instance_id: str | None = 
             raise ValueError("La resolución guardada no es válida.")
         options.update(customResolution=True, resolutionWidth=str(width), resolutionHeight=str(height))
     command = mll.command.get_minecraft_command(FORGE_ID, game, options)
-    subprocess.Popen(command, cwd=instance_dir, start_new_session=True)
+    log_path = instance_dir / "logs" / "launcher-java.log"
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+    launch_options = {"cwd": instance_dir, "stdin": subprocess.DEVNULL,
+                      "stderr": subprocess.STDOUT}
+    if sys.platform == "win32":
+        # java.exe otherwise creates a visible console when our GUI starts it.
+        launch_options["creationflags"] = subprocess.CREATE_NO_WINDOW
+    else:
+        launch_options["start_new_session"] = True
+    with log_path.open("wb") as log:
+        subprocess.Popen(command, stdout=log, **launch_options)
 
 
 def game_state() -> dict:

@@ -4,9 +4,11 @@ import hashlib
 import json
 import os
 import re
+import ssl
 import subprocess
 import sys
 import time
+import urllib.error
 import urllib.parse
 import urllib.request
 from pathlib import Path
@@ -16,6 +18,21 @@ from standalone import data_dir
 from version import VERSION
 
 MAX_INSTALLER_BYTES = 500 * 1024 * 1024
+
+
+def readable_error(exc: Exception) -> str:
+    """Give a useful TLS diagnosis without ever bypassing certificate checks."""
+    current = exc
+    seen = set()
+    while current is not None and id(current) not in seen:
+        seen.add(id(current))
+        if isinstance(current, ssl.SSLCertVerificationError) or "CERTIFICATE_VERIFY_FAILED" in str(current):
+            return ("Windows no pudo verificar el certificado HTTPS. Comprueba la fecha y hora, "
+                    "actualiza los certificados de Windows y revisa si un antivirus o proxy "
+                    "está interceptando la conexión segura.")
+        current = (current.reason if isinstance(current, urllib.error.URLError) and
+                   isinstance(current.reason, BaseException) else current.__cause__ or current.__context__)
+    return str(exc)
 
 
 def failed_update_marker(version: str) -> Path:
@@ -120,7 +137,7 @@ def inspect_update(manifest_url: str, *, install_supported: bool) -> dict:
     except Exception as exc:
         return {
             "status": "error",
-            "message": f"No se pudo comprobar el launcher: {exc}",
+            "message": f"No se pudo comprobar el launcher: {readable_error(exc)}",
             "version": VERSION,
         }
     if update is None:

@@ -13,6 +13,12 @@ import traceback
 from datetime import datetime, timezone
 from pathlib import Path
 
+# Use the Windows certificate chain builder, including intermediate certificates,
+# before the launcher and its HTTP dependencies create SSL contexts.
+if sys.platform == "win32":
+    import truststore
+    truststore.inject_into_ssl()
+
 from PySide6.QtCore import QObject, QPointF, QRect, QTimer, QUrl, Signal, Slot, Qt
 from PySide6.QtGui import QPixmap, QImage, QPainter, QColor, QCursor, QFont, QIcon
 from PySide6.QtWebChannel import QWebChannel
@@ -144,7 +150,7 @@ class Bridge(QObject):
                 else:
                     self.preflightFinished.emit(public["status"])
             except Exception as exc:
-                public = {"status": "error", "message": f"No se pudo comprobar el launcher: {exc}",
+                public = {"status": "error", "message": f"No se pudo comprobar el launcher: {launcher_updates.readable_error(exc)}",
                           "version": launcher_updates.VERSION}
                 self._preflight_state = public
                 self._emit("launcher_update_status", **public)
@@ -169,7 +175,7 @@ class Bridge(QObject):
             self.requestClose.emit()
             return True
         except Exception as exc:
-            self._emit("error", text=f"No se pudo actualizar el launcher: {exc}")
+            self._emit("error", text=f"No se pudo actualizar el launcher: {launcher_updates.readable_error(exc)}")
             self._emit("busy", busy=False)
             return False
         finally:
@@ -227,7 +233,7 @@ class Bridge(QObject):
         except standalone.LoginCancelled:
             self._emit("cancelled", action=action)
         except Exception as exc:
-            self._emit("error", text=str(exc))
+            self._emit("error", text=launcher_updates.readable_error(exc))
         finally:
             if action in {"login", "loginFresh"}:
                 self._login_cancel_event = None

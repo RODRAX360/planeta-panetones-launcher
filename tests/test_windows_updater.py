@@ -1,10 +1,12 @@
 """Validate the Windows update handoff before publishing an installer."""
 
 import subprocess
+import ssl
 import sys
 import tempfile
 import time
 import unittest
+import urllib.error
 from pathlib import Path
 from unittest.mock import patch
 
@@ -12,6 +14,12 @@ import launcher_updates
 
 
 class WindowsUpdaterTests(unittest.TestCase):
+    def test_certificate_failure_has_actionable_message(self):
+        error = urllib.error.URLError(ssl.SSLCertVerificationError("certificate verify failed"))
+        message = launcher_updates.readable_error(error)
+        self.assertIn("certificado HTTPS", message)
+        self.assertNotIn("urlopen error", message)
+
     def test_failed_marker_rejects_invalid_version(self):
         with self.assertRaises(ValueError):
             launcher_updates.failed_update_marker("../../other")
