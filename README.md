@@ -57,15 +57,15 @@ La tarjeta superior muestra el estado del servidor oficial, jugadores conectados
 El paquete de recursos `Fluid & Foolish 1.0-hotfix.zip` se conserva en la instancia local, pero se excluye de la publicación porque su archivo `README.txt` prohíbe redistribuirlo sin permiso del autor.
 
 ```bash
-python publish_pack.py --version 2026.11.03.1
-python optimized_pack.py --version 2026.11.03.1
+python publish_pack.py --version 2026.11.03.2
+python optimized_pack.py --version 2026.11.03.2
 ```
 
 La segunda orden crea `publicar/optimizado/manifest.json` y sus archivos. Publica ambas carpetas bajo el mismo hosting antes de entregar el launcher a otros jugadores. La lista de exclusiones opcionales y el cierre de dependencias están en [`optimized_pack.py`](optimized_pack.py).
 
 ### GitHub Releases
 
-El repositorio público es `RODRAX360/planeta-panetones-launcher`. El código fuente del repositorio no contiene los archivos del pack. `python prepare_github_pack.py --tag pack-2026.11.03.1` crea dos archivos ZIP en `dist/github-pack/` y dos manifiestos pequeños. Sube `pack-principal.zip` y `pack-optimizada.zip` como assets de una Release con la etiqueta exacta `pack-2026.11.03.1`. Después publica `dist/github-pack/manifest.json` como `manifest.json` en la raíz del repositorio y `dist/github-pack/optimizado/manifest.json` como `optimizado/manifest.json`. Publica los manifiestos **después** de subir ambos ZIP, porque anuncian sus URL y hashes.
+El repositorio público es `RODRAX360/planeta-panetones-launcher`. El código fuente del repositorio no contiene los archivos del pack. `python prepare_github_pack.py --tag pack-2026.11.03.2` crea dos archivos ZIP en `dist/github-pack/` y dos manifiestos pequeños. Sube `pack-principal.zip` y `pack-optimizada.zip` como assets de una Release con la etiqueta exacta `pack-2026.11.03.2`. Después publica `dist/github-pack/manifest.json` como `manifest.json` en la raíz del repositorio y `dist/github-pack/optimizado/manifest.json` como `optimizado/manifest.json`. Publica los manifiestos **después** de subir ambos ZIP, porque anuncian sus URL y hashes.
 
 La URL estable de los manifiestos es `https://raw.githubusercontent.com/RODRAX360/planeta-panetones-launcher/main`. Al pulsar **Jugar**, el launcher descarga el ZIP de la instancia elegida desde la Release, comprueba su SHA-256, instala sus archivos y conserva los mundos y preferencias. Si no cambió ningún archivo, no vuelve a descargar el ZIP. Para una versión nueva del pack, crea una nueva Release y reemplaza los manifiestos solo después de subir los ZIP nuevos. Actualmente cada cambio del pack requiere descargar el ZIP completo de esa instancia.
 
