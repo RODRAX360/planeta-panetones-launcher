@@ -1,8 +1,8 @@
 {
   "version": "1.0.11",
   "installer": {
-    "url": "https://raw.githubusercontent.com/RODRAX360/planeta-panetones-launcher/c21f252cb085f4ddca8161a62fc7a7aa698ed75f/bootstrap/PlanetaPanetones-Rescate.exe",
-    "size": 44112,
-    "sha256": "5a7d73bdeb0ed45fb25a476093dce76a3470e2155e14c92b815a1f7390e6334d"
+    "url": "https://raw.githubusercontent.com/RODRAX360/planeta-panetones-launcher/6f0c4edd0c13f94fd907af495016a0fc69baf5dc/bootstrap/PlanetaPanetones-Rescate.exe",
+    "size": 44206,
+    "sha256": "f2b48f9be46c7ce18cf40abed7b7a79d122035d6f1395833de01edcd06fb88cc"
   }
 }
