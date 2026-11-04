@@ -1,0 +1,22 @@
+name: Probar rescate de launcher Windows
+
+on:
+  push:
+    branches: [rescue-launcher-1-0-11]
+    paths:
+      - bootstrap/**
+      - .github/workflows/rescue-smoke.yml
+
+jobs:
+  rescue:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Ejecutar el mismo rescate que recibirá el launcher antiguo
+        shell: pwsh
+        run: |
+          $process = Start-Process -FilePath '.\bootstrap\PlanetaPanetones-Rescate.exe' -ArgumentList '/S' -PassThru -Wait
+          if ($process.ExitCode -ne 0) { throw "Rescate falló con código $($process.ExitCode)" }
+          $installed = Join-Path $env:LOCALAPPDATA 'Programs\PlanetaPanetones\PlanetaPanetones.exe'
+          if (-not (Test-Path -LiteralPath $installed)) { throw 'El launcher no quedó instalado' }
+          Write-Output "Launcher instalado: $installed"
