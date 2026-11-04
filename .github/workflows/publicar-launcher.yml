@@ -59,6 +59,7 @@ jobs:
         run: |
           python -m unittest discover -s tests -p test_windows_updater.py -q
           python -m unittest discover -s tests -p test_game_launch.py -q
+          python -m unittest discover -s tests -p test_resource_pack.py -q
           python -m unittest discover -s tests -p test_microsoft_login.py -q
           python -m unittest discover -s tests -p test_stable_release.py -q
       - name: Compilar instalador y manifiesto
@@ -97,6 +98,7 @@ jobs:
       - name: Validar inicio de sesión y versión
         run: |
           python -m unittest discover -s tests -p test_microsoft_login.py -q
+          python -m unittest discover -s tests -p test_resource_pack.py -q
           python -m unittest discover -s tests -p test_stable_release.py -q
       - name: Obtener appimagetool verificado
         run: |
