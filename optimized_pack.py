@@ -24,7 +24,7 @@ OPTIONAL_MOD_IDS = {
     "emotecraft", "emotecraft_borrow_their_emote",
     "emotecraft_fix_animate_texture", "stretch_emotecraft_compat",
     "bendy_customnpcs_compat", "bendylib", "gml",
-    "mru", "mossylib", "iceberg",
+    "mru", "mossylib", "iceberg", "jei",
     "yet_another_config_lib_v3", "watermedia_youtube_plugin",
 }
 
