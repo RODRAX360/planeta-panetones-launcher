@@ -7,6 +7,7 @@ from pathlib import Path
 from resource_pack import (
     ANIMATION_PACK_NAME,
     COMPATIBLE_PACK_NAME,
+    PROFILE_PACK_ORDER,
     SETTINGS_PACK_NAME,
     _activate_packs,
     _write_compatible_pack,
@@ -31,7 +32,24 @@ class ResourcePackTests(unittest.TestCase):
             self.assertIn("soundCategory_master:0.8\n", once)
             packs = json.loads(next(line.partition(":")[2] for line in once.splitlines()
                                     if line.startswith("resourcePacks:")))
-            self.assertEqual(packs, ["vanilla", "file/Other.zip",
+            self.assertEqual(packs, ["mod/punchy:punchy", "vanilla", "mod_resources",
+                                     "generated/fragmentum_layer", "file/Other.zip",
+                                     "file/" + COMPATIBLE_PACK_NAME,
+                                     "file/" + SETTINGS_PACK_NAME])
+
+    def test_profile_packs_are_enabled_in_the_same_order(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            game = Path(temporary)
+            folder = game / "resourcepacks"
+            folder.mkdir()
+            for item in PROFILE_PACK_ORDER:
+                if item.startswith("file/"):
+                    (folder / item[5:]).write_bytes(b"pack")
+            options = game / "options.txt"
+            options.write_text('resourcePacks:["file/Icons v.1.14.zip","vanilla"]\n')
+            _activate_packs(options)
+            packs = json.loads(options.read_text().split("resourcePacks:", 1)[1])
+            self.assertEqual(packs, [*PROFILE_PACK_ORDER,
                                      "file/" + COMPATIBLE_PACK_NAME,
                                      "file/" + SETTINGS_PACK_NAME])
 

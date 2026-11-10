@@ -23,6 +23,20 @@ ANIMATION_PACK_SHA512 = (
 ANIMATION_PACK_SIZE = 1881476
 SETTINGS_PACK_NAME = "Planeta-Panetones-Punchy-Ajustes.zip"
 
+# Keep the same priority as the resource pack list in the Forge 1.20.1 profile.
+# Entries for files are enabled only when the pack was included in the edition.
+PROFILE_PACK_ORDER = (
+    "mod/punchy:punchy",
+    "vanilla",
+    "mod_resources",
+    "file/FreshAnimations_v1.10.4.zip",
+    "generated/fragmentum_layer",
+    "file/Icons v.1.14.zip",
+    "file/cubic-sun-moon-v1.8.5.zip",
+    "file/[1.6] Enhanced Boss Bars.zip",
+    "file/SPEMOTES_TRANSLATIONS_v1.1.zip",
+)
+
 
 def _verified_pack(path: Path) -> bool:
     if not path.is_file() or path.stat().st_size != ANIMATION_PACK_SIZE:
@@ -120,10 +134,14 @@ def _activate_packs(options_path: Path) -> None:
             raise ValueError("Minecraft tiene una lista de paquetes de recursos dañada.") from exc
         if not isinstance(selected, list) or any(not isinstance(item, str) for item in selected):
             raise ValueError("Minecraft tiene una lista de paquetes de recursos inválida.")
+    folder = options_path.parent / "resourcepacks"
     selected = [item for item in selected if not (
         item.startswith("file/Fluid & Foolish ") or
-        item == "file/" + SETTINGS_PACK_NAME
+        item == "file/" + SETTINGS_PACK_NAME or
+        item in PROFILE_PACK_ORDER
     )]
+    selected = [item for item in PROFILE_PACK_ORDER
+                if not item.startswith("file/") or (folder / item[5:]).is_file()] + selected
     selected.extend(("file/" + COMPATIBLE_PACK_NAME, "file/" + SETTINGS_PACK_NAME))
     entry = "resourcePacks:" + json.dumps(selected, ensure_ascii=True, separators=(",", ":"))
     if index is None:

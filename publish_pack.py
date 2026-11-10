@@ -30,9 +30,14 @@ def included(path: Path) -> bool:
     if parts[0] == "config" and ("cubosu_server" in parts or path.name in
             {"player-volumes.properties", "voicechat-server.properties", "watut-server.toml"}):
         return False
-    if any(part.startswith(".") or part.lower() in {"world", "cache", "logs", "backups"} for part in parts):
+    if any(part.startswith(".") or part.lower() in {"world", "cache", "logs", "backups"}
+           or part.lower().startswith("backup-") for part in parts):
         return False
-    if any(word in path.name.lower() for word in ("cache", "history", "secret", "token", "password")):
+    if any(word in path.name.lower() for word in
+           ("cache", "history", "secret", "token", "password", ".before-", ".backup-")):
+        return False
+    if parts[:3] == ("config", "fancymenu", "customization") and \
+            path.name == "com.github.alexthe666.iceandfire.client.gui.iceandfiremainmenu_layout.txt":
         return False
     if path.suffix.lower() in {".bak", ".log", ".tmp", ".lock"}:
         return False

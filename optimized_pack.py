@@ -83,12 +83,9 @@ def publish(destination: Path, version: str) -> dict:
         raise FileNotFoundError(f"No se encontró el perfil Forge 1.20.1 de Modrinth: {SOURCE}")
     selected_mods, removed_mods = choose_mods(SOURCE / "mods")
     selected = list(selected_mods)
-    for folder in ("config", "defaultconfigs", "customnpcs"):
+    for folder in ("config", "defaultconfigs", "customnpcs", "resourcepacks"):
         for path in (SOURCE / folder).rglob("*"):
             if not included(path):
-                continue
-            relative = path.relative_to(SOURCE)
-            if folder == "config" and relative.parts[1].lower().startswith(SKIP_CONFIG_PREFIXES):
                 continue
             selected.append(path)
     selected.extend(sorted(EXTRA_MODS.glob("*.jar")))
