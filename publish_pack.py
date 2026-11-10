@@ -25,6 +25,8 @@ def included(path: Path) -> bool:
         return False
     if parts[0] == "mods":
         return len(parts) == 2 and path.suffix.lower() == ".jar" and not path.name.lower().startswith("jei-")
+    if parts[:2] == ("config", "jei"):
+        return False
     if parts[0] == "resourcepacks" and path.name.startswith("Fluid & Foolish "):
         return False
     if parts[0] == "config" and ("cubosu_server" in parts or path.name in
