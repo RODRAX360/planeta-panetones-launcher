@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "name": "Planeta Panetones",
-  "version": "2026.11.10.1",
+  "version": "2026.11.10.2",
   "minecraft": "1.20.1",
   "forge": "47.4.20",
-  "published_utc": "2026-11-10T19:25:10.918343+00:00",
+  "published_utc": "2026-11-10T19:36:16.593836+00:00",
   "files": [
     {
       "path": "config/CoroUtil/General.toml",
@@ -1390,86 +1390,6 @@
       "path": "config/jade/sort-order.json",
       "sha256": "3b56feb012031ce096353396e401ca191fed1679cfb850c7681edec4f52dcfa1",
       "size": 1919
-    },
-    {
-      "path": "config/jei/blacklist.cfg",
-      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-      "size": 0
-    },
-    {
-      "path": "config/jei/blacklist.json",
-      "sha256": "3ca754fefc49ea02e5203353bc3390e520e6717dd8b148aa07042f0b48a78621",
-      "size": 19
-    },
-    {
-      "path": "config/jei/client/default/jei-client.ini",
-      "sha256": "d61d3babd11a6ed89c4295055c142a9e26ac0ece7969d96fa33c781c2625669c",
-      "size": 14129
-    },
-    {
-      "path": "config/jei/client/default/jei-colors.ini",
-      "sha256": "1372b094bf8f1d444f04cf4da7f9dc05c445d7ab5b3f73ecd7cfbef79ccad1d7",
-      "size": 1639
-    },
-    {
-      "path": "config/jei/client/default/jei-debug.ini",
-      "sha256": "6fbae6db21c604fa008d2e4a696789c1fd2fccdbc741194c8fdfb3f1cd8bdc05",
-      "size": 1138
-    },
-    {
-      "path": "config/jei/client/default/jei-mod-id-format.ini",
-      "sha256": "e64349cae34367965848d7fb390dcd6a52d23c012c4711005a70084d958cee67",
-      "size": 847
-    },
-    {
-      "path": "config/jei/client/ingredient-list-mod-sort-order.ini",
-      "sha256": "d2fc7d7a0c50b05e01036204440a9fe1884c98ba4823fcd8f832e0ccea0064af",
-      "size": 1052
-    },
-    {
-      "path": "config/jei/client/ingredient-list-type-sort-order.ini",
-      "sha256": "8657537a27c2baa882c8074daa02dbf9821e56eb57156b0641277e91eecb6acd",
-      "size": 95
-    },
-    {
-      "path": "config/jei/client/recipe-category-sort-order.ini",
-      "sha256": "3a6877a939728356969c777a101a503c9ce5f7c838c29ca1d1f8ec193389c70a",
-      "size": 1068
-    },
-    {
-      "path": "config/jei/ingredient-list-mod-sort-order.ini",
-      "sha256": "70b259cebd7e5c05c02959b2ccc669bb1a59a9caf39e0a0cd2e81d46bab60a3a",
-      "size": 758
-    },
-    {
-      "path": "config/jei/ingredient-list-type-sort-order.ini",
-      "sha256": "ca6f0515891afed86c30c9d3d8ad1496a7d03de9ea532ab431f2ec1d3968826b",
-      "size": 72
-    },
-    {
-      "path": "config/jei/jei-client.ini",
-      "sha256": "34588df52d85317d1678a70c5bcfd905833cc7eb3b6077c500789fd2248998d5",
-      "size": 8398
-    },
-    {
-      "path": "config/jei/jei-colors.ini",
-      "sha256": "30ffef1681a9b0255e65a756406f85b1cca8b0bb3c0fab357c2727e325401bd0",
-      "size": 1330
-    },
-    {
-      "path": "config/jei/jei-debug.ini",
-      "sha256": "44e73ad4423c5bf0381da8e934861ac552cca4a12d4a007801cacf6eb85d12e9",
-      "size": 886
-    },
-    {
-      "path": "config/jei/jei-mod-id-format.ini",
-      "sha256": "07052785400b48d3757dbbcfff0b50899fbaed1ac54ea09bc9024ea7f73b7644",
-      "size": 452
-    },
-    {
-      "path": "config/jei/recipe-category-sort-order.ini",
-      "sha256": "137af59ced5e322fbc30bdfdfa88335202483064412f0c750d2aa3641601fb11",
-      "size": 687
     },
     {
       "path": "config/konkrete/locals/de_de.local",
@@ -3267,11 +3187,6 @@
       "size": 160560
     },
     {
-      "path": "mods/jei-1.20.1-forge-15.20.0.130.jar",
-      "sha256": "36d3dfb2214b9dca38c447fd971dd2dedc5f69719a5aca6ffcef69b2840ece0a",
-      "size": 1409705
-    },
-    {
       "path": "mods/konkrete_forge_1.8.0_MC_1.20-1.20.1.jar",
       "sha256": "e78686b92c3761ec26eb9d3c53efdd3d6ca77981cbd3723995e1163b7103ae0b",
       "size": 625185
@@ -3588,8 +3503,8 @@
     }
   ],
   "archive": {
-    "url": "https://github.com/RODRAX360/planeta-panetones-launcher/releases/download/pack-2026.11.10.1/pack-principal.zip",
-    "size": 750218683,
-    "sha256": "ded2322aeec7dc62020b1c933b5f0ba5105fa443fbd1d0bc36b8d97d5a07fbd3"
+    "url": "https://github.com/RODRAX360/planeta-panetones-launcher/releases/download/pack-2026.11.10.2/pack-principal.zip",
+    "size": 748773830,
+    "sha256": "f9b773f2d88ac268020def82d13ea30ee176e6a958a77baa48cc8384bc0e153b"
   }
 }
