@@ -37,6 +37,14 @@ PROFILE_PACK_ORDER = (
     "file/SPEMOTES_TRANSLATIONS_v1.1.zip",
 )
 
+# These packs were enabled by earlier launcher builds but are disabled in the
+# Forge profile used as the source for both editions.
+PREVIOUS_LAUNCHER_PACKS = (
+    "obscure_tooltips/packs/vibrant_tooltips",
+    "file/§6Immersive§8_§6Interfaces§8.zip",
+    "file/§6Immersive_Interfaces_Modded.zip",
+)
+
 
 def _verified_pack(path: Path) -> bool:
     if not path.is_file() or path.stat().st_size != ANIMATION_PACK_SIZE:
@@ -138,7 +146,8 @@ def _activate_packs(options_path: Path) -> None:
     selected = [item for item in selected if not (
         item.startswith("file/Fluid & Foolish ") or
         item == "file/" + SETTINGS_PACK_NAME or
-        item in PROFILE_PACK_ORDER
+        item in PROFILE_PACK_ORDER or
+        item in PREVIOUS_LAUNCHER_PACKS
     )]
     selected = [item for item in PROFILE_PACK_ORDER
                 if not item.startswith("file/") or (folder / item[5:]).is_file()] + selected

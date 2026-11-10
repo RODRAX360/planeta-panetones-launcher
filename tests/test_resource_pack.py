@@ -46,7 +46,12 @@ class ResourcePackTests(unittest.TestCase):
                 if item.startswith("file/"):
                     (folder / item[5:]).write_bytes(b"pack")
             options = game / "options.txt"
-            options.write_text('resourcePacks:["file/Icons v.1.14.zip","vanilla"]\n')
+            options.write_text(
+                'resourcePacks:["file/Icons v.1.14.zip","vanilla",'
+                '"obscure_tooltips/packs/vibrant_tooltips",'
+                '"file/§6Immersive_Interfaces_Modded.zip"]\n',
+                encoding="utf-8",
+            )
             _activate_packs(options)
             packs = json.loads(options.read_text().split("resourcePacks:", 1)[1])
             self.assertEqual(packs, [*PROFILE_PACK_ORDER,
