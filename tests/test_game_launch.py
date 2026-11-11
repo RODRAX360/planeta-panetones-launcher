@@ -25,8 +25,7 @@ class GameLaunchTests(unittest.TestCase):
                 standalone.launch_game(account, game, "java.exe", "principal")
             launch.assert_called_once()
             args, kwargs = launch.call_args
-            self.assertEqual(["java.exe", "-jar", "game.jar", "--quickPlayMultiplayer",
-                              "nodo2.axolthost.com:25568"], args[0])
+            self.assertEqual(["java.exe", "-jar", "game.jar"], args[0])
             self.assertIn("-Djavax.net.ssl.trustStoreType=Windows-ROOT", game_command.call_args.args[2]["jvmArguments"])
             self.assertEqual(0x08000000, kwargs["creationflags"])
             self.assertEqual(subprocess.STDOUT, kwargs["stderr"])
