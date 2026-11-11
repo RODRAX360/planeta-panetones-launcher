@@ -16,7 +16,7 @@ Launcher de escritorio independiente para **Minecraft: Java Edition 1.20.1** y *
 
 El launcher usa **una sola cuenta activa**. Para cambiarla hay que quitarla en **Ajustes → Cuenta** y volver a entrar. Las cuentas antiguas adicionales se conservan en el disco durante la migración, pero quedan ocultas e inactivas. Los perfiles locales no tienen autenticación de Minecraft y sirven para mundos locales o servidores que los acepten; no pueden entrar a servidores que exigen una cuenta verificada. Cada perfil local puede elegir una skin PNG de 64×64 o 64×32 desde Cuenta. La PNG queda en la carpeta local de Custom Skin Loader y el pack incluye el mod oficial `CustomSkinLoader_ForgeV2-14.28.jar` para mostrarla en el cliente. Otros jugadores solo verán esa skin si su cliente o servidor también sabe cargarla.
 
-Después de entrar aparece el selector de **Instancias**, con tarjetas para **Principal** y **Optimizada**. Ambas usan Minecraft 1.20.1, Forge y la misma cuenta, pero tienen carpetas independientes de mods, configuraciones y mundos. Principal incluye los mods y recursos publicables de la instancia. Optimizada se genera desde el perfil `Forge 1.20.1` de Modrinth con los mods de contenido, rendimiento, dependencias obligatorias y mods instalados en el servidor; excluye otros efectos visuales, shaders y paquetes de recursos opcionales. La selección se guarda en `preferences.json`.
+Después de entrar aparece el selector de **Instancias**, con tarjetas para **Principal** y **Optimizada**. Ambas usan Minecraft 1.20.1, Forge y la misma cuenta, pero tienen carpetas independientes de mods, configuraciones y mundos. Desde el pack 2026.11.11.1 ambas contienen los mismos mods, configuraciones, shaders, emotes y recursos publicables del perfil `Forge 1.20.1` de Modrinth, sin JEI. La selección se guarda en `preferences.json`.
 
 La autenticación se realiza directamente entre el equipo del jugador y los servicios de Microsoft, Xbox y Minecraft. El servidor del modpack distribuye archivos del pack; no recibe credenciales ni tokens. Las sesiones renovables se guardan localmente en `accounts.json` con permisos restrictivos. Si había una sesión en el antiguo `account.json`, se conserva al migrar. El launcher no redistribuye los archivos base de Minecraft: los instala desde sus fuentes oficiales.
 
@@ -52,7 +52,7 @@ La tarjeta superior muestra el estado del servidor oficial, jugadores conectados
 
 `publish_pack.py` prepara un directorio `publicar/` con `manifest.json` y `files/`. El manifiesto enumera rutas, tamaños y SHA-256. Este repositorio **no incluye** los mods, copias de seguridad, mundos ni configuraciones privadas de la instancia del creador. El contenido generado de `publicar/` se subirá por separado al hosting HTTPS del proyecto.
 
-`bundled_mods/CustomSkinLoader_ForgeV2-14.28.jar` es el binario oficial sin modificar de [Custom Skin Loader](https://modrinth.com/mod/customskinloader), distribuido como parte del pack según los términos indicados por sus autores. El instalador no lo incluye; llega mediante el manifiesto al pulsar **Jugar**.
+`bundled_mods/CustomSkinLoader_ForgeV2-14.28.jar` es el binario de [Custom Skin Loader](https://modrinth.com/mod/customskinloader). Al publicar se cambia únicamente la transformación de `CapeLayer`: Punchy Moves ya aporta ese renderizado y las dos transformaciones juntas provocaban un fallo de mixin al cargar recursos. La variante publicada se llama `CustomSkinLoader_ForgeV2-14.28-PlanetaCompat.jar`; el resto del mod, incluida la carga de skins, permanece. El archivo original y el código de esta adaptación están en este repositorio bajo GPL-3.0.
 
 El paquete de recursos `Fluid & Foolish 1.0-hotfix.zip` se conserva en la instancia local, pero se excluye de la publicación porque su archivo `README.txt` prohíbe redistribuirlo sin permiso del autor.
 
@@ -61,7 +61,7 @@ python publish_pack.py --version 2026.11.03.2
 python optimized_pack.py --version 2026.11.03.2
 ```
 
-La segunda orden crea `publicar/optimizado/manifest.json` y sus archivos. Publica ambas carpetas bajo el mismo hosting antes de entregar el launcher a otros jugadores. La lista de exclusiones opcionales y el cierre de dependencias están en [`optimized_pack.py`](optimized_pack.py).
+La segunda orden crea `publicar/optimizado/manifest.json` con el mismo contenido que la edición Principal. Publica ambas carpetas bajo el mismo hosting antes de entregar el launcher a otros jugadores. `config/planeta/profile-options.txt` se genera desde `options.txt` de Modrinth sin historial de servidores ni teclas de JEI. El launcher aplica esos ajustes al cambiar la plantilla y conserva los cambios posteriores del jugador.
 
 ### GitHub Releases
 

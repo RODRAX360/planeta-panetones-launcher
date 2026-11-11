@@ -5,6 +5,7 @@ import argparse
 import hashlib
 import json
 import shutil
+import zipfile
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -14,6 +15,12 @@ ROOT = Path(__file__).resolve().parent
 DEFAULT_DEST = ROOT / "publicar"
 EXTRA_MODS = ROOT / "bundled_mods"
 FOLDERS = ("mods", "config", "defaultconfigs", "resourcepacks", "shaderpacks", "emotes", "customnpcs")
+PROFILE_OPTIONS = Path("config/planeta/profile-options.txt")
+SKIN_MOD_NAME = "CustomSkinLoader_ForgeV2-14.28.jar"
+SKIN_COMPAT_NAME = "CustomSkinLoader_ForgeV2-14.28-PlanetaCompat.jar"
+SKIN_COREMOD_OLD = ("'net/minecraft/client/renderer/entity/player/PlayerRenderer', "
+                    "'net/minecraft/client/renderer/entity/layers/CapeLayer'")
+SKIN_COREMOD_NEW = "'net/minecraft/client/renderer/entity/player/PlayerRenderer'"
 
 
 def included(path: Path) -> bool:
@@ -22,6 +29,8 @@ def included(path: Path) -> bool:
     relative = path.relative_to(SOURCE)
     parts = relative.parts
     if not parts or parts[0] not in FOLDERS:
+        return False
+    if relative == PROFILE_OPTIONS:
         return False
     if parts[0] == "mods":
         return len(parts) == 2 and path.suffix.lower() == ".jar" and not path.name.lower().startswith("jei-")
@@ -61,6 +70,47 @@ def copy_and_hash(source: Path, destination: Path) -> tuple[str, int]:
     return digest.hexdigest(), size
 
 
+def write_profile_options(destination: Path) -> tuple[str, int]:
+    """Publish game preferences, with JEI bindings and private server history removed."""
+    source = (SOURCE / "options.txt").read_text(encoding="utf-8")
+    excluded = ("resourcePacks:", "incompatibleResourcePacks:",
+                "lastServer:", "key_key.jei.")
+    cleaned = "\n".join(line for line in source.splitlines()
+                        if not line.startswith(excluded)) + "\n"
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    destination.write_text(cleaned, encoding="utf-8")
+    data = cleaned.encode("utf-8")
+    return hashlib.sha256(data).hexdigest(), len(data)
+
+
+def copy_extra_mods(destination: Path) -> list[dict]:
+    """Keep Custom Skin Loader; let Punchy Moves render capes to avoid a mixin failure."""
+    entries = []
+    for source in sorted(EXTRA_MODS.glob("*.jar")):
+        if source.name == SKIN_MOD_NAME:
+            relative = Path("mods") / SKIN_COMPAT_NAME
+            target = destination / relative
+            target.parent.mkdir(parents=True, exist_ok=True)
+            temporary = target.with_name(target.name + ".part")
+            with zipfile.ZipFile(source) as original, zipfile.ZipFile(temporary, "w") as patched:
+                for info in original.infolist():
+                    content = original.read(info.filename)
+                    if info.filename == "transformers.js":
+                        text = content.decode("utf-8")
+                        if text.count(SKIN_COREMOD_OLD) != 1:
+                            raise ValueError("Cambió el transformador de capas de Custom Skin Loader.")
+                        content = text.replace(SKIN_COREMOD_OLD, SKIN_COREMOD_NEW).encode("utf-8")
+                    patched.writestr(info, content)
+            temporary.replace(target)
+            digest = hashlib.sha256(target.read_bytes()).hexdigest()
+            size = target.stat().st_size
+        else:
+            relative = Path("mods") / source.name
+            digest, size = copy_and_hash(source, destination / relative)
+        entries.append({"path": relative.as_posix(), "sha256": digest, "size": size})
+    return entries
+
+
 def publish(destination: Path, version: str) -> dict:
     if not SOURCE.is_dir():
         raise FileNotFoundError(f"No se encontró la instancia: {SOURCE}")
@@ -75,11 +125,11 @@ def publish(destination: Path, version: str) -> dict:
         total += size
         if index % 25 == 0 or index == len(selected):
             print(f"Preparados {index}/{len(selected)} archivos", flush=True)
-    for source in sorted(EXTRA_MODS.glob("*.jar")):
-        relative = Path("mods") / source.name
-        sha256, size = copy_and_hash(source, destination / "files" / relative)
-        files.append({"path": relative.as_posix(), "sha256": sha256, "size": size})
-        total += size
+    extras = copy_extra_mods(destination / "files")
+    files.extend(extras)
+    sha256, size = write_profile_options(destination / "files" / PROFILE_OPTIONS)
+    files.append({"path": PROFILE_OPTIONS.as_posix(), "sha256": sha256, "size": size})
+    total += sum(entry["size"] for entry in extras) + size
     files.sort(key=lambda entry: entry["path"])
     active = {entry["path"] for entry in files}
     files_dir = destination / "files"

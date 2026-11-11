@@ -33,9 +33,10 @@ class ResourcePackTests(unittest.TestCase):
             packs = json.loads(next(line.partition(":")[2] for line in once.splitlines()
                                     if line.startswith("resourcePacks:")))
             self.assertEqual(packs, ["mod/punchy:punchy", "vanilla", "mod_resources",
-                                     "generated/fragmentum_layer", "file/Other.zip",
+                                     "generated/fragmentum_layer",
                                      "file/" + COMPATIBLE_PACK_NAME,
                                      "file/" + SETTINGS_PACK_NAME])
+            self.assertIn("incompatibleResourcePacks:[]", once)
 
     def test_profile_packs_are_enabled_in_the_same_order(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -53,7 +54,8 @@ class ResourcePackTests(unittest.TestCase):
                 encoding="utf-8",
             )
             _activate_packs(options)
-            packs = json.loads(options.read_text().split("resourcePacks:", 1)[1])
+            packs = json.loads(next(line.partition(":")[2] for line in options.read_text().splitlines()
+                                    if line.startswith("resourcePacks:")))
             self.assertEqual(packs, [*PROFILE_PACK_ORDER,
                                      "file/" + COMPATIBLE_PACK_NAME,
                                      "file/" + SETTINGS_PACK_NAME])

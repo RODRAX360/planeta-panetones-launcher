@@ -133,30 +133,28 @@ def _activate_packs(options_path: Path) -> None:
     raw = options_path.read_text(encoding="utf-8") if options_path.is_file() else ""
     lines = raw.splitlines()
     index = next((i for i, line in enumerate(lines) if line.startswith("resourcePacks:")), None)
-    if index is None:
-        selected = ["vanilla", "mod_resources"]
-    else:
+    if index is not None:
         try:
-            selected = json.loads(lines[index].partition(":")[2])
+            old_selected = json.loads(lines[index].partition(":")[2])
         except json.JSONDecodeError as exc:
             raise ValueError("Minecraft tiene una lista de paquetes de recursos dañada.") from exc
-        if not isinstance(selected, list) or any(not isinstance(item, str) for item in selected):
+        if not isinstance(old_selected, list) or any(not isinstance(item, str) for item in old_selected):
             raise ValueError("Minecraft tiene una lista de paquetes de recursos inválida.")
     folder = options_path.parent / "resourcepacks"
-    selected = [item for item in selected if not (
-        item.startswith("file/Fluid & Foolish ") or
-        item == "file/" + SETTINGS_PACK_NAME or
-        item in PROFILE_PACK_ORDER or
-        item in PREVIOUS_LAUNCHER_PACKS
-    )]
     selected = [item for item in PROFILE_PACK_ORDER
-                if not item.startswith("file/") or (folder / item[5:]).is_file()] + selected
+                if not item.startswith("file/") or (folder / item[5:]).is_file()]
     selected.extend(("file/" + COMPATIBLE_PACK_NAME, "file/" + SETTINGS_PACK_NAME))
     entry = "resourcePacks:" + json.dumps(selected, ensure_ascii=True, separators=(",", ":"))
     if index is None:
         lines.append(entry)
     else:
         lines[index] = entry
+    incompatible = next((i for i, line in enumerate(lines)
+                         if line.startswith("incompatibleResourcePacks:")), None)
+    if incompatible is None:
+        lines.append("incompatibleResourcePacks:[]")
+    else:
+        lines[incompatible] = "incompatibleResourcePacks:[]"
     updated = "\n".join(lines) + "\n"
     if updated != raw:
         temporary = options_path.with_name(options_path.name + ".part")
