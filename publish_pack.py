@@ -94,7 +94,14 @@ def copy_extra_mods(destination: Path) -> list[dict]:
             temporary = target.with_name(target.name + ".part")
             with zipfile.ZipFile(source) as original, zipfile.ZipFile(temporary, "w") as patched:
                 for info in original.infolist():
+                    if info.filename.upper().startswith("META-INF/") and info.filename.upper().endswith(
+                            (".SF", ".DSA", ".RSA")):
+                        continue
                     content = original.read(info.filename)
+                    if info.filename == "META-INF/MANIFEST.MF":
+                        # The original signature covers transformers.js. Strip its
+                        # digest sections when publishing the modified GPL jar.
+                        content = content.split(b"\r\n\r\n", 1)[0] + b"\r\n\r\n"
                     if info.filename == "transformers.js":
                         text = content.decode("utf-8")
                         if text.count(SKIN_COREMOD_OLD) != 1:

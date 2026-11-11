@@ -32,6 +32,8 @@ class ProfileOptionsTests(unittest.TestCase):
             bundled = root / "bundled"
             bundled.mkdir()
             with zipfile.ZipFile(bundled / SKIN_MOD_NAME, "w") as archive:
+                archive.writestr("META-INF/MANIFEST.MF", b"Manifest-Version: 1.0\r\n\r\nName: transformers.js\r\nSHA-256-Digest: old\r\n\r\n")
+                archive.writestr("META-INF/CUSTOMSK.SF", b"signature")
                 archive.writestr("transformers.js", SKIN_COREMOD_OLD)
                 archive.writestr("keep.class", b"skin loader")
             with patch("publish_pack.EXTRA_MODS", bundled):
@@ -41,6 +43,8 @@ class ProfileOptionsTests(unittest.TestCase):
             with zipfile.ZipFile(root / "files" / entries[0]["path"]) as archive:
                 self.assertEqual(archive.read("transformers.js").decode(), SKIN_COREMOD_NEW)
                 self.assertEqual(archive.read("keep.class"), b"skin loader")
+                self.assertEqual(archive.read("META-INF/MANIFEST.MF"), b"Manifest-Version: 1.0\r\n\r\n")
+                self.assertNotIn("META-INF/CUSTOMSK.SF", archive.namelist())
 
 
 if __name__ == "__main__":
