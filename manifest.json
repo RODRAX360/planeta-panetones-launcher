@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "name": "Planeta Panetones",
-  "version": "2026.11.10.3",
+  "version": "2026.11.11.1",
   "minecraft": "1.20.1",
   "forge": "47.4.20",
-  "published_utc": "2026-11-11T04:30:41.697895+00:00",
+  "published_utc": "2026-11-11T18:44:05.822583+00:00",
   "files": [
     {
       "path": "config/CoroUtil/General.toml",
@@ -1058,8 +1058,8 @@
     },
     {
       "path": "config/forgematica/forgematica_nodo2.axolthost.com_25568_dim_minecraft_overworld.json",
-      "sha256": "fc892dd68032c17612a6cb3ffd4f8ddb1f85dc119c9d8c2ab44e8755562905b6",
-      "size": 731
+      "sha256": "7b700adf0a8d3e43c649e989d7b5e605303ae0293ee5f35849c902a8bd89a92e",
+      "size": 744
     },
     {
       "path": "config/forgematica/forgematica_planeta_panetones_2_mundo.json",
@@ -1518,7 +1518,7 @@
     },
     {
       "path": "config/oculus.properties",
-      "sha256": "92a8962f0c43ced679575e7e18c4990e7d24dab2075d6678fc7d73dfff695d26",
+      "sha256": "89ba08d90fb8dbe92f71aa5dccf6d48bd47904f0cf243493939ac421024feb6b",
       "size": 263
     },
     {
@@ -1530,6 +1530,11 @@
       "path": "config/particular-common.toml",
       "sha256": "d1c8901485ef63842ab090b79797c1333fb39d0ca96180730f7a43d23171260d",
       "size": 5201
+    },
+    {
+      "path": "config/planeta/profile-options.txt",
+      "sha256": "b4585756cbe77fa105f1749684614af2a8bc3825d4129d9f0d57123466403ad2",
+      "size": 16838
     },
     {
       "path": "config/playerrevive-client.json",
@@ -2767,9 +2772,9 @@
       "size": 2805930
     },
     {
-      "path": "mods/CustomSkinLoader_ForgeV2-14.28.jar",
-      "sha256": "2edbc47d4cb378d4cab9a7968b578e9f9dd4aad1dcb7400a9b7af29eda89bd3f",
-      "size": 153877
+      "path": "mods/CustomSkinLoader_ForgeV2-14.28-PlanetaCompat.jar",
+      "sha256": "cb3c074177ecbc55368293f41815cab6116b8fc7e3f8b4e5a7e1d2d4816824a7",
+      "size": 140132
     },
     {
       "path": "mods/Dungeon-Realm-1.20.1-1.1.3.jar",
@@ -3503,8 +3508,8 @@
     }
   ],
   "archive": {
-    "url": "https://github.com/RODRAX360/planeta-panetones-launcher/releases/download/pack-2026.11.10.3/pack-principal.zip",
-    "size": 748709798,
-    "sha256": "f8973df525aa01fcf4fb1d33db61a658ab0b1a93509231e009af5ec8d2b0a6c6"
+    "url": "https://github.com/RODRAX360/planeta-panetones-launcher/releases/download/pack-2026.11.11.1/pack-principal.zip",
+    "size": 748713076,
+    "sha256": "96d86e91e4a1c7738908249f417862b081903dbc3b4a11de102ede31dd30bfd6"
   }
 }

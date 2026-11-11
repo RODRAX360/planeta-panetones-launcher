@@ -1,11 +1,10 @@
 {
   "schema": 1,
-  "edition": "optimizada",
   "name": "Planeta Panetones Optimizada",
-  "version": "2026.11.10.3",
+  "version": "2026.11.11.1",
   "minecraft": "1.20.1",
   "forge": "47.4.20",
-  "published_utc": "2026-11-11T04:30:42.628916+00:00",
+  "published_utc": "2026-11-11T18:44:06.634225+00:00",
   "files": [
     {
       "path": "config/CoroUtil/General.toml",
@@ -1059,8 +1058,8 @@
     },
     {
       "path": "config/forgematica/forgematica_nodo2.axolthost.com_25568_dim_minecraft_overworld.json",
-      "sha256": "fc892dd68032c17612a6cb3ffd4f8ddb1f85dc119c9d8c2ab44e8755562905b6",
-      "size": 731
+      "sha256": "7b700adf0a8d3e43c649e989d7b5e605303ae0293ee5f35849c902a8bd89a92e",
+      "size": 744
     },
     {
       "path": "config/forgematica/forgematica_planeta_panetones_2_mundo.json",
@@ -1519,7 +1518,7 @@
     },
     {
       "path": "config/oculus.properties",
-      "sha256": "92a8962f0c43ced679575e7e18c4990e7d24dab2075d6678fc7d73dfff695d26",
+      "sha256": "89ba08d90fb8dbe92f71aa5dccf6d48bd47904f0cf243493939ac421024feb6b",
       "size": 263
     },
     {
@@ -1531,6 +1530,11 @@
       "path": "config/particular-common.toml",
       "sha256": "d1c8901485ef63842ab090b79797c1333fb39d0ca96180730f7a43d23171260d",
       "size": 5201
+    },
+    {
+      "path": "config/planeta/profile-options.txt",
+      "sha256": "b4585756cbe77fa105f1749684614af2a8bc3825d4129d9f0d57123466403ad2",
+      "size": 16838
     },
     {
       "path": "config/playerrevive-client.json",
@@ -2093,6 +2097,651 @@
       "size": 103
     },
     {
+      "path": "emotes/Arataka Reigen Pose (Multiverse) (Mob Psycho 100).emotecraft",
+      "sha256": "fc59c7ede2dfea9fb282cb70b3f4e053cc78a7011e4cb74efc799aa1665d6e61",
+      "size": 77035
+    },
+    {
+      "path": "emotes/Bee v5.emotecraft",
+      "sha256": "c359c2859942bcfeaca80bf3a9f01286a9df30cc00191c1bfb906f8e08262d38",
+      "size": 253513
+    },
+    {
+      "path": "emotes/Breakdance Flare.emotecraft",
+      "sha256": "84b18d6f70db36a3f145c40c82aa8c3888646b2a9aa29f587417436be5485b1d",
+      "size": 612862
+    },
+    {
+      "path": "emotes/Creeper.emotecraft",
+      "sha256": "3fe45544359d0584b73773d67a27f4f69e9a86b113721b59869de37d32d33feb",
+      "size": 1871934
+    },
+    {
+      "path": "emotes/Gang Torture Dance (Dance) (Multiverse) (JoJo).emotecraft",
+      "sha256": "77596fba3958668da003cb4c9a50a6bcfbca977ace85c48f10813a9b1225b4c2",
+      "size": 89099
+    },
+    {
+      "path": "emotes/Gangnam Style (Cycle Dance).emotecraft",
+      "sha256": "694c73626c5a24f35bb4f506c99250d493e7a3d1ec2e8566910f403a38d3ccd3",
+      "size": 54926
+    },
+    {
+      "path": "emotes/Get the Griddy.emotecraft",
+      "sha256": "f0dae24e9831aa6eb49b27fd04554b9c6729525fc95e5e3b46757e4b512570e7",
+      "size": 3366
+    },
+    {
+      "path": "emotes/Gojo.emotecraft",
+      "sha256": "6ac6d784e5b88684a13888f161699959744b451cac3a8114776492cf63fb5422",
+      "size": 173118
+    },
+    {
+      "path": "emotes/Hug.emotecraft",
+      "sha256": "e414b3ac9577acb4781afde57b458c98b521b74848cf6c0515b821822800225d",
+      "size": 73152
+    },
+    {
+      "path": "emotes/Mambo spinning.emotecraft",
+      "sha256": "916d10f68b545a086af29ca44ede43d8085a12826c199f93d0384acd43dd6c79",
+      "size": 85609
+    },
+    {
+      "path": "emotes/PURPLE GUY!!!.emotecraft",
+      "sha256": "4114d27dd8b3ac2a0088d228dca20a337a408bbf7d5432832c22b33c910c5c9c",
+      "size": 1798400
+    },
+    {
+      "path": "emotes/Requiem (Dance).emotecraft",
+      "sha256": "ce6373e582d0e9ea9a33e0642382bdc91289f810f9b2313e019110309fa7b418",
+      "size": 97139
+    },
+    {
+      "path": "emotes/Running of the walking head (Movement).emotecraft",
+      "sha256": "17d28f27dab3739002eac628fae5d4ff9a3d5829475158e8c7620945fa0b5ad7",
+      "size": 81866
+    },
+    {
+      "path": "emotes/SPE_Babylon.json",
+      "sha256": "5b80c793c437c0e8e4ba0fce3dfa09d027dd6032a87428fb883fe4eca0e135a2",
+      "size": 719937
+    },
+    {
+      "path": "emotes/SPE_Babylon.png",
+      "sha256": "2722a2a21dd5fcedbf8ff14e48a948f7798838d2b7b7d5b34253609f20709597",
+      "size": 53762
+    },
+    {
+      "path": "emotes/SPE_BangBang.json",
+      "sha256": "98123b2ab6646605892c1459a1b5c317e993f84a0739b916818293eef709d43a",
+      "size": 785922
+    },
+    {
+      "path": "emotes/SPE_BangBang.png",
+      "sha256": "9424dcc85a5b57457bbc895e5cdef75e7f4a39131a996937d2bcba1abd8b8a95",
+      "size": 48241
+    },
+    {
+      "path": "emotes/SPE_Bloody Pop.json",
+      "sha256": "2ca72a154c029c86b7f02e6c8e99008b06922043a8987b371e07456f63a998b7",
+      "size": 133575
+    },
+    {
+      "path": "emotes/SPE_Bloody Pop.png",
+      "sha256": "87799443b9a2f73c62404984ba0d71fa3a2a965592b9d2c48164973713009f84",
+      "size": 53652
+    },
+    {
+      "path": "emotes/SPE_Boomer.json",
+      "sha256": "3637dd94aa541893325800ffac2e7b466ede81f4846a3a692f9e911447cdb108",
+      "size": 366924
+    },
+    {
+      "path": "emotes/SPE_Boomer.png",
+      "sha256": "db1257500e52aacf0159223837b35bac155048bc5d537ad8f597ee45990db33d",
+      "size": 44599
+    },
+    {
+      "path": "emotes/SPE_ChristmasDance.json",
+      "sha256": "0a1cec747ac28e7ae4611825f802af8424ca66aa642cc0f0c5f91c04aef0b352",
+      "size": 746706
+    },
+    {
+      "path": "emotes/SPE_ChristmasDance.png",
+      "sha256": "65d9a9d70a17571fcead54c16b580edfa0110a6132ed8c8d2f2ac080f4940ac6",
+      "size": 50564
+    },
+    {
+      "path": "emotes/SPE_Clap.json",
+      "sha256": "4cdfe25a2624383bbec02e75b9b4e5c23eb9f5a4b49f270d6820fb77dfc7eebe",
+      "size": 163664
+    },
+    {
+      "path": "emotes/SPE_Clap.png",
+      "sha256": "a926432c5aebaacd4664eee8ee3e3a8d335a3b06cbf4fe860db7c22d603d586c",
+      "size": 51512
+    },
+    {
+      "path": "emotes/SPE_Clown Dance.json",
+      "sha256": "2fd3d5403ca2ca5b42d3918ac5f31d64f554c540da309441645f898524a08e4e",
+      "size": 168647
+    },
+    {
+      "path": "emotes/SPE_Clown Dance.png",
+      "sha256": "d721d8fe0a2f56df9d30b08bc75f064f061c85fc43243cf739be4e79f60dd29e",
+      "size": 49484
+    },
+    {
+      "path": "emotes/SPE_D4DJ_Dance.json",
+      "sha256": "247f4db7ff671f73cd56d314839d80e5137d5f26c3147e6572dc8881a866e942",
+      "size": 60341
+    },
+    {
+      "path": "emotes/SPE_D4DJ_Dance.png",
+      "sha256": "94a566ab76731adcdd39a87c35b0a1fcad838ef5fc27cdf7eded7315a04f1727",
+      "size": 48705
+    },
+    {
+      "path": "emotes/SPE_D4DJ_Dance1.json",
+      "sha256": "e444a4379389d417e0949a35e26f7bbcd94f3e54760dba7dd1cec9be8e33e659",
+      "size": 60276
+    },
+    {
+      "path": "emotes/SPE_D4DJ_Dance1.png",
+      "sha256": "f7d6aeb3e50ecfd89249178ac559cf8618e36af1aec4d495c264b5d1acd87909",
+      "size": 48645
+    },
+    {
+      "path": "emotes/SPE_D4DJ_Dance2.json",
+      "sha256": "fbdebdda4b72bab8e43e112431bc376105a94857772b96ca538f0c9972a293b8",
+      "size": 60385
+    },
+    {
+      "path": "emotes/SPE_D4DJ_Dance2.png",
+      "sha256": "822e083ce123965f62f1ec1d5a7a30be5e0af3d19b592f282c567772aaf1598a",
+      "size": 50817
+    },
+    {
+      "path": "emotes/SPE_D4DJ_Dance3.json",
+      "sha256": "201f4fc3bbb2770518c7922a4b6aa43d733afb7fd258a0674f261cc9e1941533",
+      "size": 60389
+    },
+    {
+      "path": "emotes/SPE_D4DJ_Dance3.png",
+      "sha256": "55e6b396ac15ad70d0db0cda87f6a0ef3fb41b8c02e8ac5a62ce1553a16d00e3",
+      "size": 50935
+    },
+    {
+      "path": "emotes/SPE_Dare.json",
+      "sha256": "07851641f0f55224f18d15714c7b2f2c49f1ec0201af4dea560fa549db029937",
+      "size": 770825
+    },
+    {
+      "path": "emotes/SPE_Dare.png",
+      "sha256": "454aafc02472db22425b3bfecb3660e7cc77ca0c5a8dc371775f5828b31495ce",
+      "size": 51407
+    },
+    {
+      "path": "emotes/SPE_DoIt.json",
+      "sha256": "aaa97a1240ae9ab09a3d125f8451b838bf995d9d4885ffb71a596ef47896837e",
+      "size": 724008
+    },
+    {
+      "path": "emotes/SPE_DoIt.png",
+      "sha256": "51e10e01e6c2553327f47a8d8b2d60b41f76d3c8d866f91b334064d0c1a51826",
+      "size": 50491
+    },
+    {
+      "path": "emotes/SPE_Doomer.json",
+      "sha256": "c8cc1bfabf7f781e8f0fd749e9ff64277d00bc460d945f6e4a93ed86250e0a17",
+      "size": 384308
+    },
+    {
+      "path": "emotes/SPE_Doomer.png",
+      "sha256": "7a2e364419a3550249e479e6e0be370b2b2dd13c4a57df919fc5e3441d95d221",
+      "size": 47215
+    },
+    {
+      "path": "emotes/SPE_FOMO.json",
+      "sha256": "d3470359d023f01f525abb0cf0eb8ad8d7b47dc3d76714877aa08b0621a95144",
+      "size": 805468
+    },
+    {
+      "path": "emotes/SPE_FOMO.png",
+      "sha256": "086a86577178d1dc36e856af129fed8b124c57c452e184c819f772d378604726",
+      "size": 54471
+    },
+    {
+      "path": "emotes/SPE_FameIsAGun.json",
+      "sha256": "9b955e049ed44d530c217ca697516a87b95af747641a773922375702257b6155",
+      "size": 526950
+    },
+    {
+      "path": "emotes/SPE_FameIsAGun.png",
+      "sha256": "7ca6d57701cef9eabadf6488849ac207b9ccfb3bb2163efb69138041a2dfec64",
+      "size": 49339
+    },
+    {
+      "path": "emotes/SPE_FeelGood.json",
+      "sha256": "9920eb4990379b7691d93f986d90a8e2430c62d363809abc8067fa87e200498c",
+      "size": 661843
+    },
+    {
+      "path": "emotes/SPE_FeelGood.png",
+      "sha256": "1124e461512e2b4acf49da514fe604eb0362e9a7290835eaf56f62cd0a13da9f",
+      "size": 46720
+    },
+    {
+      "path": "emotes/SPE_Feels.json",
+      "sha256": "430ddbaa3cababf7da93602b8cc96c1a5172f33c8729e168a9eebb50b6bdded4",
+      "size": 285860
+    },
+    {
+      "path": "emotes/SPE_Feels.png",
+      "sha256": "3c238ef52a3ba17e9e1d1fcc4e26e1e42bd663bc7f9d965da7c1728dba3a43d1",
+      "size": 51246
+    },
+    {
+      "path": "emotes/SPE_GirlLikeMe.json",
+      "sha256": "cb1369b2a66c781b95708d7b05fb061fa2a4343734d1c88b48dcb48be647d75d",
+      "size": 680473
+    },
+    {
+      "path": "emotes/SPE_GirlLikeMe.png",
+      "sha256": "68dfc78f291cebd4e11cffae41164d34297d44d4c9844757caf94f87ed760304",
+      "size": 45900
+    },
+    {
+      "path": "emotes/SPE_Groove1.json",
+      "sha256": "ae473ded6219ed7776803ce4c60eeeeb68a751d98357c02b75b7df7021b53929",
+      "size": 262091
+    },
+    {
+      "path": "emotes/SPE_Groove1.png",
+      "sha256": "68f27f3664b67091d3d7ab6529df321dd642485b771fee1a3e27f9e362ddbb10",
+      "size": 50615
+    },
+    {
+      "path": "emotes/SPE_HeatAbnormal.json",
+      "sha256": "721243668b97b5e9df71e720879c8fcd41f93cd658c14c6391e00bd055907286",
+      "size": 942437
+    },
+    {
+      "path": "emotes/SPE_HeatAbnormal.png",
+      "sha256": "d924182182c873bd695b9d67a29f0f2753679e166e7484cea6e726088c7ab3db",
+      "size": 49960
+    },
+    {
+      "path": "emotes/SPE_HootieFrutti.json",
+      "sha256": "782cf383ad1d8dd1ffb2f215825d28485d8afe39d3ce1f84db5da1a4cd4b1ac5",
+      "size": 792481
+    },
+    {
+      "path": "emotes/SPE_HootieFrutti.png",
+      "sha256": "4c7c43a56adccb097d5da65db81f052d31cc8f2e9a88ea1d9cdd0bcf91c23cdb",
+      "size": 53317
+    },
+    {
+      "path": "emotes/SPE_Hypnotize.json",
+      "sha256": "7d9eed4fd79219bcd96a08d7fc031f2c12237099951ea4cce7a238773563bb60",
+      "size": 781504
+    },
+    {
+      "path": "emotes/SPE_Hypnotize.png",
+      "sha256": "462bc07b630839f3a33cc38a495940e3c05d3d699c35b94297e0dd6411858e9a",
+      "size": 44183
+    },
+    {
+      "path": "emotes/SPE_IChooseYou.json",
+      "sha256": "73221abcc1624d12aebfd6fe19ddc056eb1df8e3d89207be6750ca3375b718ab",
+      "size": 702860
+    },
+    {
+      "path": "emotes/SPE_IChooseYou.png",
+      "sha256": "eb41052be474b8940216301e8b1e856a9f6ddf6a9921b638aa076297c8194733",
+      "size": 49671
+    },
+    {
+      "path": "emotes/SPE_KDA_Popstar.json",
+      "sha256": "0e941dfdf57cadcd1bd1dee7589f2d363188557ab111e17cc2c5b78164fe0057",
+      "size": 718569
+    },
+    {
+      "path": "emotes/SPE_KDA_Popstar.png",
+      "sha256": "4dc4f2ad88cce2cf613f0b6ea04925fe73d38edc38705ffe8311b97523114b85",
+      "size": 52030
+    },
+    {
+      "path": "emotes/SPE_KissNTell.json",
+      "sha256": "fa427595573e9c6273ac1b28a5463f70b951ceb0602a256380a370345dc635b1",
+      "size": 695933
+    },
+    {
+      "path": "emotes/SPE_KissNTell.png",
+      "sha256": "d0dc5f4f6cb104e6407dfc2bb49d80cbbc23a9c47d9d8f42d867c65cbefa9dcd",
+      "size": 48418
+    },
+    {
+      "path": "emotes/SPE_KontonBoogie.json",
+      "sha256": "5fa6b920cc30b6ec3121c1ec3ffebbf6bac30e531b89d98d9b0ee888e46ab660",
+      "size": 624567
+    },
+    {
+      "path": "emotes/SPE_KontonBoogie.png",
+      "sha256": "1f33c7305a9c7084d7760ae563c8adf69b68aa81753a19baf803ad252eccbe41",
+      "size": 51174
+    },
+    {
+      "path": "emotes/SPE_Lemonade2.json",
+      "sha256": "6d66c29acf8d8a41165703eb98dd4e050638f880bedb569f4340119407891756",
+      "size": 793749
+    },
+    {
+      "path": "emotes/SPE_Lemonade2.png",
+      "sha256": "9008ffa556cd3d9b6f4c03675a1847a79595627a99440fafa2b62b271ce348fa",
+      "size": 40408
+    },
+    {
+      "path": "emotes/SPE_Luck.json",
+      "sha256": "4c0e9f87a8fb1dfa2cfc86f9f757c5adaf26a422cdb32af5d0aa9c2a7afef6cd",
+      "size": 299584
+    },
+    {
+      "path": "emotes/SPE_Luck.png",
+      "sha256": "8dbf239d15d820f05f698ce590f22b89dd866f87cb3bd86c4a11dbc9547f2b28",
+      "size": 51773
+    },
+    {
+      "path": "emotes/SPE_MadeMyNight.json",
+      "sha256": "a3c7d8735f465acccde8eb2893a671f07ec4dc10248ddca7d6c974326735f47b",
+      "size": 791208
+    },
+    {
+      "path": "emotes/SPE_MadeMyNight.png",
+      "sha256": "14e43fbcd490044ec21cffce59974d0dac869bfd84cb1f09096ef8bfba4a8e1f",
+      "size": 45389
+    },
+    {
+      "path": "emotes/SPE_MidnightSun.json",
+      "sha256": "c56d5b724b4c52f8422b3a2e019a5bf4fd1641177d81ae2fd594a052d4b66fdf",
+      "size": 1094779
+    },
+    {
+      "path": "emotes/SPE_MidnightSun.png",
+      "sha256": "dd1c7f8c25bcdc55e50e0c380687047034dfc5cdcddd1c3e769107d82db52391",
+      "size": 47849
+    },
+    {
+      "path": "emotes/SPE_Miku.json",
+      "sha256": "d74af57f0c4082ef7981e05d7526c4a1ff76aa43cbc559373cebb1c35819ecee",
+      "size": 809893
+    },
+    {
+      "path": "emotes/SPE_Miku.png",
+      "sha256": "5515db9e241de7c1b1af5a0b991c04dd78b8526ce9c0f5fd48abf73def3caaa3",
+      "size": 56272
+    },
+    {
+      "path": "emotes/SPE_Milkshake.json",
+      "sha256": "d4ff4d486ab5a13e01bd1fe4e3890df2fb3add753d1afd01493bc05e854ca95f",
+      "size": 783360
+    },
+    {
+      "path": "emotes/SPE_Milkshake.png",
+      "sha256": "8bde59cf261946da00771340a58db347030e99e21d55b077316039008c3a9e82",
+      "size": 54540
+    },
+    {
+      "path": "emotes/SPE_Mogged.json",
+      "sha256": "d8d5d42ba40e9654ef1d605871f9f4ff1b376724b0c31ab5cba4d8b027c00a11",
+      "size": 745408
+    },
+    {
+      "path": "emotes/SPE_Mogged.png",
+      "sha256": "aff24e721f6bbd93ecbc80542b36537fe428bd7c8ab2afdf5933dc1b3b333a30",
+      "size": 45276
+    },
+    {
+      "path": "emotes/SPE_MoreJumpMore.json",
+      "sha256": "e80b0c58242c8ff60c30772d9ff313eeee3dfe5a74324a244b2681c0c0dc1332",
+      "size": 716229
+    },
+    {
+      "path": "emotes/SPE_MoreJumpMore.png",
+      "sha256": "89ab27eb399bc42dcb686a88ef0aeb7b8ee7eabbfef0085bdf5d890db134ae71",
+      "size": 56181
+    },
+    {
+      "path": "emotes/SPE_Move1.json",
+      "sha256": "813dccd9ed302b0928e8b6972b0fbd31ca1b0d00a2dded16f98ee127d158f2cf",
+      "size": 218140
+    },
+    {
+      "path": "emotes/SPE_Move1.png",
+      "sha256": "ba4e67d72d275256c60b7cc16e2566d85951571ba96bc66c2eecb5139bf857b9",
+      "size": 49079
+    },
+    {
+      "path": "emotes/SPE_MysticalMagical.json",
+      "sha256": "be197af8abf98ee6410d102ceae2acbcc7c42a9a009e422398e3236e522d35c2",
+      "size": 437049
+    },
+    {
+      "path": "emotes/SPE_MysticalMagical.png",
+      "sha256": "da3d02a720da1bbd6feeab5fe3db8b98601109734818f09a791d81a4b83152bf",
+      "size": 46335
+    },
+    {
+      "path": "emotes/SPE_NonsenseBungaku.json",
+      "sha256": "42519ee88402d5c4127c7a92f8d4d0ffa9b536763399545a22179da35190fda8",
+      "size": 623504
+    },
+    {
+      "path": "emotes/SPE_NonsenseBungaku.png",
+      "sha256": "fd836e95e22f1687a773517af6f3071e3e3454809e357347393176540f25be8b",
+      "size": 50805
+    },
+    {
+      "path": "emotes/SPE_NowkieDance.json",
+      "sha256": "7eb21d5e508f8830830bf51768808a4400419240106d10028b95bd232cfa3448",
+      "size": 769952
+    },
+    {
+      "path": "emotes/SPE_NowkieDance.png",
+      "sha256": "56ce17f669f2edc2282c6df75d9692862f7fa98640bcf84d420c2475451ab514",
+      "size": 45710
+    },
+    {
+      "path": "emotes/SPE_Oddloop.json",
+      "sha256": "72ba9e6369469cdf7570b004ea3fa15e7c1fcdf9b5203c3b575bad6bb8d7ef17",
+      "size": 571840
+    },
+    {
+      "path": "emotes/SPE_Oddloop.png",
+      "sha256": "e46fffa57467ce4d6cacb3b458a4ac69f0482d083ce22f2365cac3624b3f5551",
+      "size": 51962
+    },
+    {
+      "path": "emotes/SPE_PinkyUp.json",
+      "sha256": "2c38d24591db18e0148c401a428f98dc97b3d9c3d2f03b19617ee45da561fbc6",
+      "size": 780638
+    },
+    {
+      "path": "emotes/SPE_PinkyUp.png",
+      "sha256": "978a32f3a9d38a89bee0185144b7e77b7225d90c45e6fd2e6d2e43fa4b693e81",
+      "size": 51114
+    },
+    {
+      "path": "emotes/SPE_PopOff.json",
+      "sha256": "c97d3aa652be901435f36e2956649128649649a413851fe69a27ddbfdb4a1caf",
+      "size": 789280
+    },
+    {
+      "path": "emotes/SPE_PopOff.png",
+      "sha256": "c10d2eaa011c836469a2c7e3c3bc6920da091a3d2b4a9490b83bd9dc5c33ec23",
+      "size": 45622
+    },
+    {
+      "path": "emotes/SPE_SaWaDiKa.json",
+      "sha256": "5c58d0ae8684a430c6378ee711eb9e630bd32f7240030d9751bf71cee163af17",
+      "size": 765723
+    },
+    {
+      "path": "emotes/SPE_SaWaDiKa.png",
+      "sha256": "1e453fe0b3526ded6b04730158c92185d164a9b8d746d85ae8468369a7a528db",
+      "size": 52257
+    },
+    {
+      "path": "emotes/SPE_Samsa.json",
+      "sha256": "39edf709d44d7d166e4470e9fc520968eeac04d564f417c6cb58165fceb8f682",
+      "size": 743146
+    },
+    {
+      "path": "emotes/SPE_Samsa.png",
+      "sha256": "1b0ab6e1c1402ffbe1c9290f1e0a5657ccc72c283696b2b9f36c32fe42eb9207",
+      "size": 50254
+    },
+    {
+      "path": "emotes/SPE_Scuba.json",
+      "sha256": "db2b83f3b870c138ae3c67c6eee6a94509f07d1a58dd7e1cf575f06652b81bcb",
+      "size": 436593
+    },
+    {
+      "path": "emotes/SPE_Scuba.png",
+      "sha256": "7951235822d5c0bf547ef33e711d4c4caccaa445d3d8b42b148ae86f945de2b9",
+      "size": 48639
+    },
+    {
+      "path": "emotes/SPE_Skibidi.json",
+      "sha256": "ae09f6e4f44fb5aa57663d0efc02fe6d4308c9f31410e389b754f02abbbb6156",
+      "size": 70758
+    },
+    {
+      "path": "emotes/SPE_Skibidi.png",
+      "sha256": "9d309615ff48abe9d304e4c61dde2f95ee47fa228a34fedf61578b7565f82696",
+      "size": 55205
+    },
+    {
+      "path": "emotes/SPE_SnowWaltz1.json",
+      "sha256": "c8e0a88f48718959588ee985de7d219de0baa9f596e93408d171c5a0580594b5",
+      "size": 726581
+    },
+    {
+      "path": "emotes/SPE_SnowWaltz1.png",
+      "sha256": "b1a1f90796bc19e03f29b077075a4ca576322e5584de538d64712f652ed87957",
+      "size": 59445
+    },
+    {
+      "path": "emotes/SPE_SnowWaltz2.json",
+      "sha256": "2e035e728b54faec55bba695b071040d6206e02397954060c6cf6a307ef49555",
+      "size": 727334
+    },
+    {
+      "path": "emotes/SPE_SnowWaltz2.png",
+      "sha256": "6248da9f56e5036974e653e53949afe69dedc8e37b4d33b2ae52b3b13bf9ef8a",
+      "size": 59424
+    },
+    {
+      "path": "emotes/SPE_SplitDance.json",
+      "sha256": "1a2a46cac0b91b78f8f3b4d2e5e3bf59111a902a97e19b74381223e61dce0db2",
+      "size": 864326
+    },
+    {
+      "path": "emotes/SPE_SplitDance.png",
+      "sha256": "1b15f714aab40557e0b8300f89cc5bfbf48c57b8e44e8dc3c0d42817fc252888",
+      "size": 56027
+    },
+    {
+      "path": "emotes/SPE_Tectonic.json",
+      "sha256": "34814b90d915ddb60efcfc11e5f46b2b9c8d1cf9d0e61b42be20c52aff1ad6ce",
+      "size": 797137
+    },
+    {
+      "path": "emotes/SPE_Tectonic.png",
+      "sha256": "f327840f0f9350256cc702400dc23c1bbf863d8c9671150d82aeb9ccd7d2c3e2",
+      "size": 45981
+    },
+    {
+      "path": "emotes/SPE_TondemoWonderz.json",
+      "sha256": "28ad226d5383b8e88c0f4f2fe5a15b374df1b5c094791d52ff138b070163ebf1",
+      "size": 709074
+    },
+    {
+      "path": "emotes/SPE_TondemoWonderz.png",
+      "sha256": "0d326e33274200a879d55234db67dfcc551cac5383fc3efeb1640d46ea6df272",
+      "size": 48505
+    },
+    {
+      "path": "emotes/SPE_Touch.json",
+      "sha256": "a43c2e9f19c5336594ca9ff131caee8841539017a594dc3c8252491c9f62923d",
+      "size": 778225
+    },
+    {
+      "path": "emotes/SPE_Touch.png",
+      "sha256": "86b279b21f15aad9a0097e8dd5691f7e86ccae3f894b6a07c70cae85674bfe88",
+      "size": 49868
+    },
+    {
+      "path": "emotes/SPE_Villain.json",
+      "sha256": "ebb612d9d719c83e47433215fd47ca24916e0bc08aa3af6db881215d8979c032",
+      "size": 711878
+    },
+    {
+      "path": "emotes/SPE_Villain.png",
+      "sha256": "74419d55e92cde202b0894ba52bab4c11f9a910f55dc627d1d59fbae9a1a8927",
+      "size": 45468
+    },
+    {
+      "path": "emotes/SPE_Yararara.json",
+      "sha256": "8cf2291f13418ceccd42046427926d028f4e7763a70387e87fd864ec64f9d3ef",
+      "size": 494482
+    },
+    {
+      "path": "emotes/SPE_Yararara.png",
+      "sha256": "54b35e56ee609f7e1b49b96b4fad0d031f5c0c0d7d955afa1e28017f902006a7",
+      "size": 48256
+    },
+    {
+      "path": "emotes/Stretch.emotecraft",
+      "sha256": "52626df3d869175e85541b40644bdd64a916e05726843d64a735471c25b1c348",
+      "size": 35510
+    },
+    {
+      "path": "emotes/Twerk (Dance).emotecraft",
+      "sha256": "8753886699b9577336677587642a9d52f6a62f98443dbbde93dcb2de778ba68d",
+      "size": 59234
+    },
+    {
+      "path": "emotes/emotecraft_export/Пыточный разгон (Танец) (Мульти вселенная) (JoJo).emotecraft",
+      "sha256": "4127cba6dd6fecc5fd618e1d3d559afde47359357757a8bdde1edd05ff83a464",
+      "size": 89233
+    },
+    {
+      "path": "emotes/json_export/Пыточный разгон (Танец) (Мульти вселенная) (JoJo).json",
+      "sha256": "12bcd67593fc99590ceae15118e15af3bdeef075b0171d3321758d446b0c32c9",
+      "size": 128081
+    },
+    {
+      "path": "emotes/json_export/Пыточный разгон (Танец) (Мульти вселенная) (JoJo).png",
+      "sha256": "37c62c3870bb1287ab599987195b70b76f2633a9fa9a4320d5219dfd4b6230f2",
+      "size": 79288
+    },
+    {
+      "path": "emotes/stock dance.emotecraft",
+      "sha256": "30a954461ad61fbf822c75169add3587b68f32c063630d7a32a6b3b6c619a77f",
+      "size": 1735729
+    },
+    {
+      "path": "mods/AdvancementPlaques-1.20.1-forge-1.6.9.jar",
+      "sha256": "537f84f1153369d61878965846a8ead7c5eae3a6ad917b04c02521ad76182ad2",
+      "size": 208850
+    },
+    {
+      "path": "mods/AnimatedHearts-2.0.0.jar",
+      "sha256": "f489927f9ec8c2ba18163221a3af96dfc62eb52745719036409a26e5fee9a31a",
+      "size": 365458
+    },
+    {
       "path": "mods/Chunky-1.3.146.jar",
       "sha256": "996a3c9b53e6c0e0850fb9e78d3546d2c37a1b789ddaf529b17e4fe62ab23141",
       "size": 341451
@@ -2123,9 +2772,9 @@
       "size": 2805930
     },
     {
-      "path": "mods/CustomSkinLoader_ForgeV2-14.28.jar",
-      "sha256": "2edbc47d4cb378d4cab9a7968b578e9f9dd4aad1dcb7400a9b7af29eda89bd3f",
-      "size": 153877
+      "path": "mods/CustomSkinLoader_ForgeV2-14.28-PlanetaCompat.jar",
+      "sha256": "cb3c074177ecbc55368293f41815cab6116b8fc7e3f8b4e5a7e1d2d4816824a7",
+      "size": 140132
     },
     {
       "path": "mods/Dungeon-Realm-1.20.1-1.1.3.jar",
@@ -2183,9 +2832,19 @@
       "size": 1439110
     },
     {
+      "path": "mods/Iceberg-1.20.1-forge-1.1.25.jar",
+      "sha256": "91ad6b459e0c7a16a9f3dc90230248a696600ceec6646aa23263559b8648dbc3",
+      "size": 134551
+    },
+    {
       "path": "mods/ImmediatelyFast-Forge-1.5.5+1.20.4.jar",
       "sha256": "82db19cc65b5c11a444498fb4b8cbcb0393c043e794cb5bf368631a0af765035",
       "size": 532063
+    },
+    {
+      "path": "mods/ImmersiveUI-FORGE-0.3.0.jar",
+      "sha256": "7295ae6681b178ed633e951b1f4478d15b2ed7b13836038caf7d3c9427fff1ff",
+      "size": 401514
     },
     {
       "path": "mods/Jade-1.20.1-Forge-11.13.3.jar",
@@ -2198,9 +2857,19 @@
       "size": 630415
     },
     {
+      "path": "mods/MRU-1.0.4+1.20.1+forge.jar",
+      "sha256": "520c07bceb8987c4bb355d32b495ae03e4f106553df47b1a9691a08420016fa2",
+      "size": 287393
+    },
+    {
       "path": "mods/MaFgLib-0.1.14-mc1.20.1.jar",
       "sha256": "2918c4f511b93d559ec8b85d87402e195baeec7634307740961d06435c4e7ed1",
       "size": 521709
+    },
+    {
+      "path": "mods/MossyLib-1.6.0+1.20.1+forge.jar",
+      "sha256": "3ae64769b33b201b9756003bc32806866e6f37871d27b17c9e6f5eaa9d0d3a23",
+      "size": 374176
     },
     {
       "path": "mods/MouseTweaks-forge-mc1.20.1-2.25.1.jar",
@@ -2228,9 +2897,19 @@
       "size": 5298162
     },
     {
+      "path": "mods/Resourcify (1.20.1-forge)-1.8.7.jar",
+      "sha256": "f358237339ab2cadd846c13f2c4f4f5aaaaaadb97dbed2a73fe55cfe83138c26",
+      "size": 2953633
+    },
+    {
       "path": "mods/Ribbits-1.20.1-Forge-3.0.5.jar",
       "sha256": "e04aa665df7e96844fe8833f29cc343feefac8ad7b949399d7b4a60475123e2b",
       "size": 2223589
+    },
+    {
+      "path": "mods/Sounds-2.2.1+1.20.1+forge.jar",
+      "sha256": "2fa22c59f967e963c97e7d4374a8713247402fa6c87654b3057a1c248217c7fd",
+      "size": 10974911
     },
     {
       "path": "mods/SubtleEffects-forge-1.20.1-1.14.3.jar",
@@ -2318,6 +2997,16 @@
       "size": 561741
     },
     {
+      "path": "mods/bendy-customnpcs-compat-0.1.2.jar",
+      "sha256": "ca76f26fe9ba6986b5186077262bfa966494a4c125ac3349030d924696ba26bc",
+      "size": 7950
+    },
+    {
+      "path": "mods/bendy-lib-forge-4.0.0.jar",
+      "sha256": "dd4af8f403fc9b2f1250144c4b6cb89ea46114be50e6fa00a6c9162cfc870b2b",
+      "size": 50745
+    },
+    {
       "path": "mods/block_factorys_bosses-2.1.2-forge-1.20.1.jar",
       "sha256": "8c61087aa483f90861451682519582e03fa76e773d855e35180a8ed3428938bc",
       "size": 23963009
@@ -2336,6 +3025,11 @@
       "path": "mods/celestisynth-1.20.1-1.3.4-all.jar",
       "sha256": "d16e4bda6f2f493364d36026905dfcdaf4f042f12b919fa7c04c6030c09000b7",
       "size": 2664860
+    },
+    {
+      "path": "mods/chatanimation-forge-1.3.3+mc1.20.1.jar",
+      "sha256": "431da94acc595487a27b174c40c15c6e2ccce5a8e9538ed8ee04f2d95eacdca3",
+      "size": 1067270
     },
     {
       "path": "mods/citadel-2.6.3-1.20.1.jar",
@@ -2363,6 +3057,11 @@
       "size": 398066
     },
     {
+      "path": "mods/customskyboxes-forge-mc1.20.1-1.0.4.jar",
+      "sha256": "0622375eae7ac34eb44589277d84c2bc446130d9ed1f333af125466ab3bffdf0",
+      "size": 482473
+    },
+    {
       "path": "mods/deeperdarker-forge-1.20.1-1.3.3.jar",
       "sha256": "d07dc6155e0b751c7d1ec26dabb7284a41798c85e48b0d809fd1254e489ed455",
       "size": 17844266
@@ -2378,6 +3077,11 @@
       "size": 402345
     },
     {
+      "path": "mods/eatinganimation-1.20.1-5.1.0.jar",
+      "sha256": "506ffc2e2bcc5709c8121382c5d0428ca642ceaeebe2a9169c9b0475a83c657c",
+      "size": 294792
+    },
+    {
       "path": "mods/elemental_wizards_rpg-forge-3.1.1+1.20.1.jar",
       "sha256": "4dff6faafd84eeb828f6fa96bc25f230fa71350dd03f7f30659eb03262a3d248",
       "size": 1382668
@@ -2388,14 +3092,34 @@
       "size": 1320675
     },
     {
+      "path": "mods/emotecraft-borrow-their-emote-1.0.1+1.20.1+forge.jar",
+      "sha256": "483fbbe851b9cbb26f7449f92c4cadc5ff8e75b8dd4078ade479b5c94a5ef776",
+      "size": 488494
+    },
+    {
       "path": "mods/emotecraft-for-MC1.20.1-2.2.7-b.build.50-forge.jar",
       "sha256": "ffaac96e37e6fa950080e2eb4aa361aa8b7bd6c4370862f39893ac2d266d7c14",
       "size": 680255
     },
     {
+      "path": "mods/emotecraft_fix_animate_texture-1.2.jar",
+      "sha256": "ab22c5f5a6594cdbe4062d5cd9615d2cabf08288046fe9a383f15d2b1c65c855",
+      "size": 265908
+    },
+    {
       "path": "mods/endermanoverhaul-forge-1.20.1-1.0.4.jar",
       "sha256": "18f9f0bf3a9b4f77ad6913c28ccb927cde24f5d19524152cfe79ebb3dcccacc5",
       "size": 1208062
+    },
+    {
+      "path": "mods/entity_model_features-3.3.9-1.20.1-forge.jar",
+      "sha256": "a6bf54761d6572c5868eec9320d642c263a6490d045fcff437f00d7cf87c2c8f",
+      "size": 826048
+    },
+    {
+      "path": "mods/entity_texture_features-7.2.4-1.20.1-forge.jar",
+      "sha256": "de36ff8d3dcb75688d04a3c3ac5a338f654372589deb42533a81921ad55dd49f",
+      "size": 982567
     },
     {
       "path": "mods/epic-structures-dungeons-1.2.5.jar",
@@ -2433,6 +3157,11 @@
       "size": 1038209
     },
     {
+      "path": "mods/gml-4.0.10-all.jar",
+      "sha256": "f99ed0c1df92ae4168e9831962581ccd4de7d77fcb96e951205c133eef922962",
+      "size": 11125462
+    },
+    {
       "path": "mods/hamsters-forge-1.0.3-1.20.1.jar",
       "sha256": "68a81007153fa97e8986306a2e358fcaa8a240d2fe8f30d361acfc43f8f7c51f",
       "size": 439448
@@ -2451,6 +3180,11 @@
       "path": "mods/immersive_paintings-0.6.13+1.20.1-forge.jar",
       "sha256": "069d5dffa4060d965899e607fad725c4d80a8086cef64f1d7563259b0a070633",
       "size": 4856103
+    },
+    {
+      "path": "mods/immersivehotbar-1.2.2-forge-1.20.1-all.jar",
+      "sha256": "6a914777f33af72ff29a15fb717a5affd8edb1ba08078f6bc6fe79b7bffa0b40",
+      "size": 305716
     },
     {
       "path": "mods/jauml-forge-1.20.1-2.3.1.jar",
@@ -2506,6 +3240,26 @@
       "path": "mods/nirvana-forge-1.2.5.jar",
       "sha256": "b0736a2b9f551ff2cdd976ade088ac1bd0635b3b10d037e548ef30924aed78e4",
       "size": 2771950
+    },
+    {
+      "path": "mods/notenoughanimations-forge-1.12.6-mc1.20.1.jar",
+      "sha256": "66f1f6d61102dd03a4afafe4c9f1d39be9e55dabc8d0821cb46acca1328b525d",
+      "size": 1870649
+    },
+    {
+      "path": "mods/obscure_tooltips-forge-1.20.1-3.10.1.jar",
+      "sha256": "ac8b26da3c4ec73988c0b83ac3e77ab9a116f3f88066b4d174dc6563ffd335bd",
+      "size": 1138929
+    },
+    {
+      "path": "mods/oculus-mc1.20.1-1.8.0.jar",
+      "sha256": "0945df0cba0f62b3901dd80c3268e5311b770ece78c78037a45db12ac0425fef",
+      "size": 2851119
+    },
+    {
+      "path": "mods/particlerain-4.0.0-beta.11+1.20.1-forge.jar",
+      "sha256": "d0a0cfde04071f186c43bd5b18ccfac3a247d8c74ca334b5cf36e1288532dc5a",
+      "size": 1252832
     },
     {
       "path": "mods/particular-1.20.1-Forge-1.5.7.jar",
@@ -2593,6 +3347,26 @@
       "size": 1508496
     },
     {
+      "path": "mods/skinlayers3d-forge-1.11.3-mc1.20.1.jar",
+      "sha256": "6229ea6e5d77dd1f66d21163bf3187abb899d59f508dae63ab67ecbb0f804cc5",
+      "size": 2093560
+    },
+    {
+      "path": "mods/smoothswapping-0.9.3.2-1.20.1-forge.jar",
+      "sha256": "c6d75a2acd9b269524da4de35a1681535069f885e7a910b013962db3f7842709",
+      "size": 60843
+    },
+    {
+      "path": "mods/sodiumdynamiclights-forge-1.0.10-1.20.1.jar",
+      "sha256": "dff5325abb58c0c8526dffb80e764188bde045fd02ca6ed5e2bb76f0897d46f4",
+      "size": 511601
+    },
+    {
+      "path": "mods/sodiumoptionsapi-forge-1.0.10-1.20.1.jar",
+      "sha256": "37ec0b6248f04e856e6e5ba2066c4ded9981ce128282a9b45cdb10b67b9c8415",
+      "size": 443978
+    },
+    {
       "path": "mods/spark-1.10.53-forge.jar",
       "sha256": "eba275ba9bb0cb5b542913c3138c6eeff6a752898266d63d125d185f26ac99ed",
       "size": 3114590
@@ -2606,6 +3380,11 @@
       "path": "mods/spell_power-forge-1.6.1+1.20.1.jar",
       "sha256": "03dd31bebf21816a1199454b635e8713e78a5e3bb7ce817618db06aa198e8f48",
       "size": 233501
+    },
+    {
+      "path": "mods/stretch-emotecraft-compat-0.1.1.jar",
+      "sha256": "6654f6a33206d38260d9d22ee2348f367465656a0a8339dd020e05b0caa971df",
+      "size": 4562
     },
     {
       "path": "mods/structure_pool_api-forge-1.2.1+1.20.1.jar",
@@ -2638,6 +3417,11 @@
       "size": 5047780
     },
     {
+      "path": "mods/visuality-forge-2.2.0.jar",
+      "sha256": "0eb8b00fb8e3bef96930a13a6abeec6fde624baf95886d54e82986f03998d88e",
+      "size": 226834
+    },
+    {
       "path": "mods/voicechat-forge-1.20.1-2.6.24.jar",
       "sha256": "72fd45aa54616000be2808054258455d0c965897a27608299762f7957ff9ffdd",
       "size": 4939841
@@ -2651,6 +3435,11 @@
       "path": "mods/watermedia-2.1.37.jar",
       "sha256": "a032d6ea31a04a52243035d35088e5954a9a4cf8ed7298099c5cc62a88e8c955",
       "size": 37049098
+    },
+    {
+      "path": "mods/watermedia_youtube_plugin-2.1.2.jar",
+      "sha256": "95c2841103b4d1e0c222f29b49d9500c0d5306772aa18c6eb11925be6ff7507e",
+      "size": 3830072
     },
     {
       "path": "mods/watervision-FG-mc1.20.1-v0.1.0-alpha.jar",
@@ -2671,6 +3460,11 @@
       "path": "mods/wizards-forge-3.1.3+1.20.1.jar",
       "sha256": "9e0b238e418a8339a532350421da4011637ac3dcad37e9ef71f320ccc043a311",
       "size": 4525440
+    },
+    {
+      "path": "mods/yet_another_config_lib_v3-3.6.6+1.20.1-forge.jar",
+      "sha256": "bd05da3d9df29b914165583f1c6dfd918a138996447ff32c0418329824027a8f",
+      "size": 1105891
     },
     {
       "path": "resourcepacks/FreshAnimations_v1.10.4.zip",
@@ -2706,11 +3500,17 @@
       "path": "resourcepacks/§6Immersive§8_§6Interfaces§8.zip",
       "sha256": "91e8303b22d921074619252b9b66b9fc2127c97aa7a6d487f39056900c091547",
       "size": 1197001
+    },
+    {
+      "path": "shaderpacks/photon_v1.3b.zip",
+      "sha256": "120897768eaa8cb1f14a3e98f88dff009ae3204ee3b96904a4fe8586edfc1ead",
+      "size": 3800987
     }
   ],
+  "edition": "optimizada",
   "archive": {
-    "url": "https://github.com/RODRAX360/planeta-panetones-launcher/releases/download/pack-2026.11.10.3/pack-optimizada.zip",
-    "size": 656057728,
-    "sha256": "e329646123c64ae50a3d22196ae292a32faf66b37fa15ecd2802dbc09e9c7eeb"
+    "url": "https://github.com/RODRAX360/planeta-panetones-launcher/releases/download/pack-2026.11.11.1/pack-optimizada.zip",
+    "size": 748713076,
+    "sha256": "5f61e9adbbe061e215ebac807d2f6fd9d46d15df5970866374f24bd697c7e2a3"
   }
 }
