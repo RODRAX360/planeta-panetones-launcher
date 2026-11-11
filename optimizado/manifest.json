@@ -2,10 +2,10 @@
   "schema": 1,
   "edition": "optimizada",
   "name": "Planeta Panetones Optimizada",
-  "version": "2026.11.10.2",
+  "version": "2026.11.10.3",
   "minecraft": "1.20.1",
   "forge": "47.4.20",
-  "published_utc": "2026-11-10T19:36:20.936176+00:00",
+  "published_utc": "2026-11-11T04:30:42.628916+00:00",
   "files": [
     {
       "path": "config/CoroUtil/General.toml",
@@ -1354,8 +1354,8 @@
     },
     {
       "path": "config/immersive_portals.json",
-      "sha256": "92fd2050bce0b10760454e7d1b6d7d3aed2c6c66236a410a906b4468bdcc3a6e",
-      "size": 1557
+      "sha256": "7ca011525dd7cb49e13ab20043c57b39e80eb45dbfa1152f277a81e9d02cb13c",
+      "size": 1556
     },
     {
       "path": "config/immersiveui.yaml",
@@ -1519,7 +1519,7 @@
     },
     {
       "path": "config/oculus.properties",
-      "sha256": "cd9280f4448fae229725799a4ca1f29312e307d639ea185865d724b0083dc84a",
+      "sha256": "92a8962f0c43ced679575e7e18c4990e7d24dab2075d6678fc7d73dfff695d26",
       "size": 263
     },
     {
@@ -1559,8 +1559,8 @@
     },
     {
       "path": "config/punchy_moves/camera.json",
-      "sha256": "1004d403e93008ba7b7019de3bb8c7cd79a59c6e8cbd1f3535572573cfece00c",
-      "size": 358
+      "sha256": "6c7c6423db73edce7846be29f8d69fe8432b2fc842e018b1820f81e73ba25c2f",
+      "size": 359
     },
     {
       "path": "config/punchy_moves/face.json",
@@ -2009,8 +2009,8 @@
     },
     {
       "path": "config/voicechat/voicechat-client.properties",
-      "sha256": "ba57291a0722e531ef84dfe052a30ab905fef9265ec0f27a14626be4246a505f",
-      "size": 4956
+      "sha256": "43603f01d884cab948684328757bd01ab4c93d94e7fd504d3a9f1cf62bb0d788",
+      "size": 5033
     },
     {
       "path": "config/waterframes-client.toml",
@@ -2123,9 +2123,9 @@
       "size": 2805930
     },
     {
-      "path": "mods/CustomSkinLoader_Universal-15.1.jar",
-      "sha256": "c8769a38b3cc1da2a7b2f5827d1a53a24cd1ef6d0784b1eb545569f5882a2ffb",
-      "size": 222917
+      "path": "mods/CustomSkinLoader_ForgeV2-14.28.jar",
+      "sha256": "2edbc47d4cb378d4cab9a7968b578e9f9dd4aad1dcb7400a9b7af29eda89bd3f",
+      "size": 153877
     },
     {
       "path": "mods/Dungeon-Realm-1.20.1-1.1.3.jar",
@@ -2578,9 +2578,9 @@
       "size": 408736
     },
     {
-      "path": "mods/ruletahud-3.20.116-complete.jar",
-      "sha256": "d612dbe126175858f6cffdccd4f305bde1b3586b4dcf9e00bc46d2579506e789",
-      "size": 71899325
+      "path": "mods/ruletahud-3.20.119-complete.jar",
+      "sha256": "5ac0cbeaba6941b65127f7c1bde1f06cf76ac29413fa4eb227717ea7ca19352f",
+      "size": 71904258
     },
     {
       "path": "mods/runes-forge-1.3.2+1.20.1.jar",
@@ -2709,8 +2709,8 @@
     }
   ],
   "archive": {
-    "url": "https://github.com/RODRAX360/planeta-panetones-launcher/releases/download/pack-2026.11.10.2/pack-optimizada.zip",
-    "size": 656121760,
-    "sha256": "bc6c51893fa8d1490748be453946e5bf0ca5cf021ff130ed3bf87c60fd53fa6f"
+    "url": "https://github.com/RODRAX360/planeta-panetones-launcher/releases/download/pack-2026.11.10.3/pack-optimizada.zip",
+    "size": 656057728,
+    "sha256": "e329646123c64ae50a3d22196ae292a32faf66b37fa15ecd2802dbc09e9c7eeb"
   }
 }
