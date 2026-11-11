@@ -669,11 +669,6 @@ def launch_game(account: dict, game: Path, java: str, instance_id: str | None = 
         # roots as the launcher for Minecraft's authenticated HTTPS requests.
         options["jvmArguments"].append("-Djavax.net.ssl.trustStoreType=Windows-ROOT")
     command = mll.command.get_minecraft_command(FORGE_ID, game, options)
-    server_address = str(config.get("server_address", "")).strip()
-    if server_address:
-        # Minecraft 1.20.1 supports Quick Play; one click in the launcher joins
-        # the configured server after the client finishes loading.
-        command.extend(("--quickPlayMultiplayer", server_address))
     log_path = instance_dir / "logs" / "launcher-java.log"
     log_path.parent.mkdir(parents=True, exist_ok=True)
     launch_options = {"cwd": instance_dir, "stdin": subprocess.DEVNULL,
