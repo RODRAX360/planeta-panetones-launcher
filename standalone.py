@@ -567,6 +567,48 @@ def refreshed_account(status) -> dict:
     return account
 
 
+def _usable_java(path: str | None) -> bool:
+    """Reject incomplete runtimes before handing them to Forge."""
+    if not path or not Path(path).is_file():
+        return False
+    try:
+        result = subprocess.run(
+            [path, "-version"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+            timeout=10, check=False,
+            creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return False
+    return result.returncode == 0
+
+
+def _get_or_install_java(java_name: str, game: Path, runtime: dict, callbacks: dict, status) -> str:
+    java = mll.runtime.get_executable_path(java_name, game)
+    if _usable_java(java):
+        return java
+
+    # A partial installation in minecraft/runtime can contain DLLs still loaded
+    # by a running game. Windows refuses to overwrite those files. Install into
+    # a fresh directory instead and reuse it on later launches.
+    cache = data_dir() / "java-runtimes"
+    if cache.is_dir():
+        for root in sorted(cache.iterdir(), reverse=True):
+            if root.is_dir() and (root / ".ready").is_file():
+                java = mll.runtime.get_executable_path(java_name, root)
+                if _usable_java(java):
+                    return java
+
+    status(f"Instalando Java {runtime['javaMajorVersion']}…")
+    root = cache / uuid.uuid4().hex
+    root.mkdir(parents=True)
+    mll.runtime.install_jvm_runtime(java_name, root, callback=callbacks)
+    java = mll.runtime.get_executable_path(java_name, root)
+    if not _usable_java(java):
+        raise RuntimeError("No se pudo instalar Java correctamente.")
+    (root / ".ready").write_text(java_name, encoding="utf-8")
+    return java
+
+
 def install_game(status, progress) -> tuple[Path, str]:
     game = data_dir() / "minecraft"
     game.mkdir(parents=True, exist_ok=True)
@@ -588,13 +630,7 @@ def install_game(status, progress) -> tuple[Path, str]:
     if runtime is None:
         raise RuntimeError("No se pudo identificar la versión de Java necesaria.")
     java_name = runtime["name"]
-    java = mll.runtime.get_executable_path(java_name, game)
-    if not java or not Path(java).is_file():
-        status(f"Instalando Java {runtime['javaMajorVersion']}…")
-        mll.runtime.install_jvm_runtime(java_name, game, callback=callbacks)
-        java = mll.runtime.get_executable_path(java_name, game)
-    if not java:
-        raise RuntimeError("No se pudo instalar Java.")
+    java = _get_or_install_java(java_name, game, runtime, callbacks, status)
     if not mll.mod_loader.is_version_valid(FORGE_ID, game):
         status("Instalando Forge 47.4.20…")
         mll.mod_loader.get_mod_loader("forge").install(
