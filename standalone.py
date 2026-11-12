@@ -24,6 +24,7 @@ from PySide6.QtGui import QImage, QPainter
 from updater import sync_pack
 from resource_pack import ensure_animation_pack
 from profile_options import apply_profile_options
+from cpm_settings import allow_cuy_model
 from version import VERSION
 
 
@@ -668,6 +669,7 @@ def update_pack(status, progress, *, verify_all: bool = False, instance_id: str 
     )
     status("Aplicando idioma, teclas y ajustes de Modrinth…")
     apply_profile_options(instance_game_dir(choice))
+    allow_cuy_model(instance_game_dir(choice))
     status("Activando animaciones de Punchy Moves…")
     ensure_animation_pack(instance_game_dir(choice))
     return manifest
