@@ -1,8 +1,8 @@
 {
-  "version": "1.0.16",
+  "version": "1.0.17",
   "installer": {
     "url": "https://github.com/RODRAX360/planeta-panetones-launcher/releases/download/launcher/PlanetaPanetones-x86_64.AppImage",
     "size": 230443512,
-    "sha256": "a9db92b4a8010940ca73d6860caf9d1134ab9fc7e75776782bd6973bf5c3724f"
+    "sha256": "8242aa616d564fbd2401eb413f557d6398073f6daab4818ad0e84802357e6602"
   }
 }
