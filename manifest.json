@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "name": "Planeta Panetones",
-  "version": "2026.11.11.1",
+  "version": "2026.11.16.1",
   "minecraft": "1.20.1",
   "forge": "47.4.20",
-  "published_utc": "2026-11-11T18:44:05.822583+00:00",
+  "published_utc": "2026-11-16T18:11:21.672439+00:00",
   "files": [
     {
       "path": "config/CoroUtil/General.toml",
@@ -663,8 +663,8 @@
     },
     {
       "path": "config/cpm.json",
-      "sha256": "1dd8fe266085f454cba1e104ca67b27cff1f1d27abf15f69964698925488df22",
-      "size": 1132
+      "sha256": "178f4a222883037f4ab7946b98c8f1543e3d7eaaaa88979c7c10b803c195b9c9",
+      "size": 1316
     },
     {
       "path": "config/creeperoverhaul.jsonc",
@@ -1058,8 +1058,8 @@
     },
     {
       "path": "config/forgematica/forgematica_nodo2.axolthost.com_25568_dim_minecraft_overworld.json",
-      "sha256": "7b700adf0a8d3e43c649e989d7b5e605303ae0293ee5f35849c902a8bd89a92e",
-      "size": 744
+      "sha256": "593c2b4e8ba6ea82d3a15dea298bf67a5cd76db852436e7e614ee8c77c7becac",
+      "size": 729
     },
     {
       "path": "config/forgematica/forgematica_planeta_panetones_2_mundo.json",
@@ -1518,7 +1518,7 @@
     },
     {
       "path": "config/oculus.properties",
-      "sha256": "89ba08d90fb8dbe92f71aa5dccf6d48bd47904f0cf243493939ac421024feb6b",
+      "sha256": "6bda32507ebe6143dbb56572d6b471ee18e9789509813abea6eadc327fa18593",
       "size": 263
     },
     {
@@ -1533,8 +1533,8 @@
     },
     {
       "path": "config/planeta/profile-options.txt",
-      "sha256": "b4585756cbe77fa105f1749684614af2a8bc3825d4129d9f0d57123466403ad2",
-      "size": 16838
+      "sha256": "21948d90959c1a8617b3270a29e5b5bd8dbf8ed56ae4d5bb617092ff812052c1",
+      "size": 16839
     },
     {
       "path": "config/playerrevive-client.json",
@@ -1758,8 +1758,8 @@
     },
     {
       "path": "config/rpgmoblevelingsystem/dimensions_settings.json",
-      "sha256": "f4972fe74304e1b844ae27c586e2eaa84f85f427a4ffddf6b5df767450443351",
-      "size": 700
+      "sha256": "362db9af12527e5f0e9cce675dc61ce2b6590d352d0b72f4008737d1f635dda4",
+      "size": 699
     },
     {
       "path": "config/rpgmoblevelingsystem/global_settings.json",
@@ -2022,11 +2022,6 @@
       "size": 1012
     },
     {
-      "path": "config/watermedia/custom_vlc_path.txt",
-      "sha256": "3e65f195bd71ed07fe00b22868c8451409d9a4d695eea2896ec56f960b35df61",
-      "size": 81
-    },
-    {
       "path": "config/watut-client.toml",
       "sha256": "a73212a23bab676fdc629005fc37f637cbb4afe5157d5fc6ff318fc3f6b9655a",
       "size": 3175
@@ -2080,6 +2075,51 @@
       "path": "config/wom.toml",
       "sha256": "96230349047e5432811d45cbd45a404cbab196c4754ba34f3ddf8a11afcab707",
       "size": 152
+    },
+    {
+      "path": "config/xaero/lib/client.cfg",
+      "sha256": "43ed9dbfa5b4d6f0f3d2e8c2ced17ad298164b22c68ff11d415257a39b074336",
+      "size": 26
+    },
+    {
+      "path": "config/xaero/lib/common.cfg",
+      "sha256": "98f698d96a6d21d830a455b4ad045b70516fa63c298021742d8499e7f0366cd2",
+      "size": 236
+    },
+    {
+      "path": "config/xaero/lib/profiles/default.cfg",
+      "sha256": "34ae854b17d896d7cb853bdc28c27231a3947e91cb9f0991f372846ee3c2a907",
+      "size": 121
+    },
+    {
+      "path": "config/xaero/lib/server_profiles/default.cfg",
+      "sha256": "d438aea41ca41e93697e059f523686935c0add482f6abe96b532bbf10c6ed80a",
+      "size": 75
+    },
+    {
+      "path": "config/xaero/world-map/client.cfg",
+      "sha256": "d0f079a8df083f6f60a0e0c1316a25fc841755a91bdcb2f86c66ead8e7d4d13d",
+      "size": 521
+    },
+    {
+      "path": "config/xaero/world-map/common.cfg",
+      "sha256": "0c229eb0daf85bd09af51f21eeeb99497a3bd50a825d5ab1ca695fb21bf6cf9d",
+      "size": 141
+    },
+    {
+      "path": "config/xaero/world-map/profiles/default.cfg",
+      "sha256": "5422abf9c83fedef6509144293fad20f588d4bb6ce0cf1af78cbcd2bcd0d2ccf",
+      "size": 1619
+    },
+    {
+      "path": "config/xaero/world-map/server_profiles/default.cfg",
+      "sha256": "d438aea41ca41e93697e059f523686935c0add482f6abe96b532bbf10c6ed80a",
+      "size": 75
+    },
+    {
+      "path": "config/xaeropatreon.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size": 0
     },
     {
       "path": "config/yacl.json5",
@@ -3067,6 +3107,11 @@
       "size": 17844266
     },
     {
+      "path": "mods/diorama-0.10.2-forge-1.20.1.jar",
+      "sha256": "edd9035e3214832b8ddec19222481b57aa5c9c6552004c3006f2749adb42ce60",
+      "size": 2113420
+    },
+    {
       "path": "mods/dungeons_and_combat-1.2.2-forge-1.20.1.jar",
       "sha256": "f05416402fa478647b65d808ea2b0585176b7cbd9da242fbcbcf5ed9a9dc2d82",
       "size": 12399294
@@ -3332,9 +3377,9 @@
       "size": 408736
     },
     {
-      "path": "mods/ruletahud-3.20.119-complete.jar",
-      "sha256": "5ac0cbeaba6941b65127f7c1bde1f06cf76ac29413fa4eb227717ea7ca19352f",
-      "size": 71904258
+      "path": "mods/ruletahud-3.20.122-complete.jar",
+      "sha256": "a3e87c72c73d1bcd87132d1ae204c211da48fe7f2f2194f0df03d28f24c8af74",
+      "size": 71929937
     },
     {
       "path": "mods/runes-forge-1.3.2+1.20.1.jar",
@@ -3462,6 +3507,11 @@
       "size": 4525440
     },
     {
+      "path": "mods/xaeroworldmap-forge-1.20.1-1.47.0.jar",
+      "sha256": "88c6d844163c95a94d92bc6d87d9011cc840bd6207c3099a81b113d4450a3f6b",
+      "size": 1429424
+    },
+    {
       "path": "mods/yet_another_config_lib_v3-3.6.6+1.20.1-forge.jar",
       "sha256": "bd05da3d9df29b914165583f1c6dfd918a138996447ff32c0418329824027a8f",
       "size": 1105891
@@ -3508,8 +3558,8 @@
     }
   ],
   "archive": {
-    "url": "https://github.com/RODRAX360/planeta-panetones-launcher/releases/download/pack-2026.11.11.1/pack-principal.zip",
-    "size": 748713076,
-    "sha256": "96d86e91e4a1c7738908249f417862b081903dbc3b4a11de102ede31dd30bfd6"
+    "url": "https://github.com/RODRAX360/planeta-panetones-launcher/releases/download/pack-2026.11.16.1/pack-principal.zip",
+    "size": 752285977,
+    "sha256": "0125b12e69ea03ed7111b319351f5a00c9c30569dcf1d88446df49dd19415d69"
   }
 }
