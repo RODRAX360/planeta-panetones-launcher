@@ -36,6 +36,9 @@ def included(path: Path) -> bool:
         return len(parts) == 2 and path.suffix.lower() == ".jar" and not path.name.lower().startswith("jei-")
     if parts[:2] == ("config", "jei"):
         return False
+    if relative == Path("config/watermedia/custom_vlc_path.txt"):
+        # This points to the pack author's machine, never to a player's VLC.
+        return False
     if parts[0] == "resourcepacks" and path.name.startswith("Fluid & Foolish "):
         return False
     if parts[0] == "config" and ("cubosu_server" in parts or path.name in

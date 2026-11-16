@@ -10,7 +10,7 @@ from publish_pack import (SKIN_COREMOD_NEW, SKIN_COREMOD_OLD,
 
 
 class ProfileOptionsTests(unittest.TestCase):
-    def test_applies_language_keys_once_and_keeps_unrelated_user_settings(self):
+    def test_adds_missing_defaults_and_preserves_player_preferences(self):
         with tempfile.TemporaryDirectory() as temporary:
             game = Path(temporary)
             template = game / TEMPLATE
@@ -20,10 +20,16 @@ class ProfileOptionsTests(unittest.TestCase):
             options.write_text("lang:en_us\nkey_key.jei.showRecipe:key.keyboard.r\nfov:0.7\n")
             apply_profile_options(game)
             self.assertEqual(options.read_text(),
-                             "lang:es_mx\nfov:0.7\nkey_key.jump:key.keyboard.space\n")
-            options.write_text(options.read_text().replace("lang:es_mx", "lang:es_es"))
+                             "lang:en_us\nfov:0.7\nkey_key.jump:key.keyboard.space\n")
+            options.write_text(options.read_text().replace("lang:en_us", "lang:es_es"))
             apply_profile_options(game)
             self.assertIn("lang:es_es", options.read_text())
+
+            template.write_text("lang:es_mx\nkey_key.jump:key.keyboard.r\n"
+                                "key_key.diorama.open_map:key.keyboard.f6\n", encoding="utf-8")
+            apply_profile_options(game)
+            self.assertIn("key_key.jump:key.keyboard.space", options.read_text())
+            self.assertIn("key_key.diorama.open_map:key.keyboard.f6", options.read_text())
 
     def test_custom_skin_loader_keeps_mod_and_skips_only_cape_transform(self):
         with tempfile.TemporaryDirectory() as temporary:

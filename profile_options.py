@@ -1,4 +1,4 @@
-"""Apply the Modrinth profile settings once per published template."""
+"""Add profile defaults without replacing a player's existing preferences."""
 
 import hashlib
 from pathlib import Path
@@ -26,11 +26,8 @@ def apply_profile_options(game_dir: Path) -> None:
         key = line.partition(":")[0]
         if key.startswith("key_key.jei."):
             continue
-        if key in defaults:
-            lines.append(key + ":" + defaults[key])
-            seen.add(key)
-        else:
-            lines.append(line)
+        lines.append(line)
+        seen.add(key)
     for key, value in defaults.items():
         if key not in seen:
             lines.append(key + ":" + value)
