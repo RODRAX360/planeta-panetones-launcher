@@ -73,6 +73,19 @@ def copy_and_hash(source: Path, destination: Path) -> tuple[str, int]:
     return digest.hexdigest(), size
 
 
+def write_cpm_settings(source: Path, destination: Path) -> tuple[str, int]:
+    """Publish the Cuy viewing limits without local editor history or machine paths."""
+    config = json.loads(source.read_text(encoding="utf-8"))
+    owners = ("b7146297-5e54-3f08-9b8e-b981431db8f0",
+              "9e5dc3f2-2ab7-4b5d-8153-544467a86f1e")
+    players = {uuid: {"maxLink": 256, "maxTex": 2048, "maxCubeCount": 1024}
+               for uuid in owners}
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    data = json.dumps({"playerSettings": players}, ensure_ascii=False, indent=2).encode("utf-8") + b"\n"
+    destination.write_bytes(data)
+    return hashlib.sha256(data).hexdigest(), len(data)
+
+
 def write_profile_options(destination: Path) -> tuple[str, int]:
     """Publish game preferences, with JEI bindings and private server history removed."""
     source = (SOURCE / "options.txt").read_text(encoding="utf-8")
@@ -130,7 +143,10 @@ def publish(destination: Path, version: str) -> dict:
     total = 0
     for index, source in enumerate(selected, 1):
         relative = source.relative_to(SOURCE)
-        sha256, size = copy_and_hash(source, destination / "files" / relative)
+        if relative == Path("config/cpm.json"):
+            sha256, size = write_cpm_settings(source, destination / "files" / relative)
+        else:
+            sha256, size = copy_and_hash(source, destination / "files" / relative)
         files.append({"path": relative.as_posix(), "sha256": sha256, "size": size})
         total += size
         if index % 25 == 0 or index == len(selected):
