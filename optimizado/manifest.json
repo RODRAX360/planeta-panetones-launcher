@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "name": "Planeta Panetones Optimizada",
-  "version": "2026.11.16.2",
+  "version": "2026.11.17.1",
   "minecraft": "1.20.1",
   "forge": "47.4.20",
-  "published_utc": "2026-11-16T22:12:12.486045+00:00",
+  "published_utc": "2026-11-17T17:04:37.889626+00:00",
   "files": [
     {
       "path": "config/CoroUtil/General.toml",
@@ -663,8 +663,8 @@
     },
     {
       "path": "config/cpm.json",
-      "sha256": "b77c70b4a950604e1c0b0348c04a2006943099f28e41f64a80ce03b5a6eb90b6",
-      "size": 277
+      "sha256": "3c0a7af9db4e79e21d32158f7be526cca21b5559b2b52f7f5ef5eb155f4371ff",
+      "size": 523
     },
     {
       "path": "config/creeperoverhaul.jsonc",
@@ -3377,9 +3377,9 @@
       "size": 408736
     },
     {
-      "path": "mods/ruletahud-3.20.123-complete.jar",
-      "sha256": "509e9b605ee64bc432c858ea79830d6a538a9d6e3d9536b24107cf452767f6f2",
-      "size": 71955528
+      "path": "mods/ruletahud-3.20.125-complete.jar",
+      "sha256": "d7168e34f49dd5de7049216d09498e15fce368f95b54c32051db6c0c4127a78c",
+      "size": 71943784
     },
     {
       "path": "mods/runes-forge-1.3.2+1.20.1.jar",
@@ -3559,8 +3559,8 @@
   ],
   "edition": "optimizada",
   "archive": {
-    "url": "https://github.com/RODRAX360/planeta-panetones-launcher/releases/download/pack-2026.11.16.2/pack-principal.zip",
-    "size": 752309179,
-    "sha256": "ffdd6f8848258231d3ed811870572544754c8ee07f1728d91303be6cbe5e4d48"
+    "url": "https://github.com/RODRAX360/planeta-panetones-launcher/releases/download/pack-2026.11.17.1/pack-optimizada.zip",
+    "size": 752297681,
+    "sha256": "484da65e1a35ac91ac59c50fd45552ad11b5938ed56798cb52d74dc1864363a9"
   }
 }
